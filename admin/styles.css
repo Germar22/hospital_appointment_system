@@ -1,0 +1,29 @@
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+}
+
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+table th {
+    background-color: #f4f4f4;
+}
+
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+table a {
+    text-decoration: none;
+    color: #4CAF50;
+}
+
+table a:hover {
+    text-decoration: underline;
+}

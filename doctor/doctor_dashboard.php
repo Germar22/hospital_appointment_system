@@ -1,20 +1,23 @@
 <?php
 session_start();
-include '../db.php'; // Adjust path if needed
+include '../db.php'; // Ensure this path is correct
 
-// Check if the user is logged in and is a doctor
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'doctor') {
-    header("Location: login.php");
+// Check if user is logged in and is a doctor
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'doctor') {
+    header("Location: ../index.php"); // Redirect to login page if not logged in or not a doctor
     exit();
 }
 
-// Fetch appointments with patient and doctor details
-$stmt = $pdo->prepare("SELECT a.id, a.appointment_date, a.status, u.name AS patient_name, d.name AS doctor_name 
-                       FROM appointments a 
-                       JOIN users u ON a.patient_id = u.id 
-                       JOIN doctors d ON a.doctor_id = d.user_id 
-                       WHERE d.user_id = :doctor_id");
-$stmt->execute(['doctor_id' => $_SESSION['user_id']]);
+$doctor_id = $_SESSION['user_id']; // Assuming doctor_id is stored in session after login
+
+// Fetch appointments for the logged-in doctor
+$stmt = $pdo->prepare("SELECT a.id AS appointment_id, p.name AS patient_name, d.name AS doctor_name, a.appointment_date, a.status
+                      FROM appointments a
+                      JOIN patients p ON a.patient_id = p.id
+                      JOIN doctors d ON a.doctor_id = d.id
+                      WHERE d.user_id = ? 
+                      ORDER BY a.appointment_date");
+$stmt->execute([$doctor_id]);
 $appointments = $stmt->fetchAll();
 ?>
 
@@ -23,7 +26,7 @@ $appointments = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Dashboard</title>
+    <title>Doctor Dashboard - Appointments</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -31,97 +34,122 @@ $appointments = $stmt->fetchAll();
             margin: 0;
             padding: 0;
         }
-        .navbar {
-            background-color: #007bff;
-            padding: 10px;
-            color: white;
-            text-align: center;
-        }
         .container {
+            max-width: 800px;
+            margin: 50px auto;
             padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            .logout {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .logout a {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .logout a:hover {
+            background-color: #c82333;
+        }
+        }
+        h2 {
+            text-align: center;
+            color: #333;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
         }
         th, td {
             padding: 12px;
             text-align: left;
+            border-bottom: 1px solid #ddd;
         }
         th {
             background-color: #007bff;
             color: white;
         }
-        .logout, .manage-buttons {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
+        tr:hover {
+            background-color: #f5f5f5;
         }
-        .logout a, .manage-buttons a {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
+        .status {
+            padding: 5px;
             border-radius: 4px;
-            text-decoration: none;
-            margin: 0 10px;
+            color: white;
+            text-align: center;
         }
-        .logout a:hover, .manage-buttons a:hover {
-            background-color: #0056b3;
+        .status.Pending {
+            background-color: #ffc107;
         }
-        .logout a.logout-btn {
+        .status.Completed {
+            background-color: #28a745;
+        }
+        .status.Cancelled {
             background-color: #dc3545;
         }
-        .logout a.logout-btn:hover {
-            background-color: #c82333;
+        .nav-links {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .nav-links a {
+            display: inline-block;
+            margin: 5px;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .nav-links a:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-
-<div class="navbar">
-    <h1>Doctor Dashboard</h1>
-</div>
-
-<div class="container">
-    <h2>Upcoming Appointments</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Appointment ID</th>
-                <th>Patient Name</th>
-                <th>Appointment Date</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($appointments as $appointment): ?>
+    <div class="container">
+        <h2>Your Appointments</h2>
+        <table>
+            <thead>
                 <tr>
-                    <td><?php echo htmlspecialchars($appointment['id']); ?></td>
-                    <td><?php echo htmlspecialchars($appointment['patient_name']); ?></td>
-                    <td><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
-                    <td><?php echo htmlspecialchars($appointment['status']); ?></td>
+                    <th>Appointment ID</th>
+                    <th>Patient Name</th>
+                    <th>Doctor Name</th>
+                    <th>Appointment Date</th>
+                    <th>Status</th>
                 </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                <?php if (!empty($appointments)): ?>
+                    <?php foreach ($appointments as $appointment): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
+                            <td><?php echo htmlspecialchars($appointment['patient_name']); ?></td>
+                            <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
+                            <td><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
+                            <td><span class="status <?php echo htmlspecialchars($appointment['status']); ?>"><?php echo htmlspecialchars($appointment['status']); ?></span></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="5">No appointments found.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
 
-    <!-- Manage Patients and Update Profile Buttons -->
-    <div class="manage-buttons">
-        <a href="manage_patients.php">Manage Patients</a>
-        <a href="update_profile.php">Update Profile</a>
+        <div class="nav-links">
+            <a href="doctor_dashboard.php">Back to Dashboard</a>
+        </div>
+
+        <div class="logout">
+            <a href="../logout.php">Log Out</a>
+        </div>
     </div>
-
-    <!-- Logout Button -->
-    <div class="logout">
-        <a href="../logout.php" class="logout-btn">Logout</a>
-    </div>
-</div>
-
 </body>
 </html>

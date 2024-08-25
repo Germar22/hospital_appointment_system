@@ -100,7 +100,7 @@ $appointments = $stmt->fetchAll();
                 <tr>
                     <th>Appointment ID</th>
                     <th>Patient Name</th>
-                    <th>Doctor Name</th>
+                    <th>Appointed Doctor</th>
                     <th>Appointment Date</th>
                     <th>Status</th>
                 </tr>

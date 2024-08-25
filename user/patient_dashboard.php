@@ -134,7 +134,7 @@ $appointments = $stmt->fetchAll();
         <div class="nav-links">
             <a href="book_appointment.php">Book New Appointment</a>
             <a href="update_profile.php">Update Profile</a>
-            <a href="logout.php">Logout</a>
+            <a href="../logout.php">Logout</a>
         </div>
     </div>
 </body>

@@ -10,9 +10,12 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch doctors for dropdown
+// Fetch doctors for dropdown by joining with users table and filtering by user_type = 'doctor'
 try {
-    $stmt = $pdo->query("SELECT id, name FROM doctors");
+    $stmt = $pdo->query("SELECT d.id, u.name 
+                         FROM doctors d 
+                         JOIN users u ON d.user_id = u.id 
+                         WHERE u.user_type = 'doctor'");
     $doctors = $stmt->fetchAll();
 
     // Debug: Check if doctors are fetched
@@ -27,27 +30,22 @@ try {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $doctor_id = $_POST['doctor_id'];
     $appointment_date = $_POST['appointment_date'];
-    $patient_id = $user_id; // From session
 
-    // Check if the selected doctor exists
-    $stmt = $pdo->prepare("SELECT id FROM doctors WHERE id = ?");
-    $stmt->execute([$doctor_id]);
-    $doctor = $stmt->fetch();
-
-    if (!$doctor) {
-        $error = "Selected doctor does not exist.";
-    } else {
-        // Check if the patient record exists
+    // Fetch the patient ID using the user_id from the session
+    try {
         $stmt = $pdo->prepare("SELECT id FROM patients WHERE user_id = ?");
-        $stmt->execute([$patient_id]);
+        $stmt->execute([$user_id]);
         $patient = $stmt->fetch();
 
         if (!$patient) {
             $error = "Patient record not found.";
         } else {
+            $patient_id = $patient['id'];
+
             // Insert appointment into database
             try {
-                $stmt = $pdo->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, status, created_at, updated_at) VALUES (?, ?, ?, 'Pending', NOW(), NOW())");
+                $stmt = $pdo->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, status, created_at, updated_at) 
+                                       VALUES (?, ?, ?, 'Pending', NOW(), NOW())");
                 $stmt->execute([$patient_id, $doctor_id, $appointment_date]);
 
                 // Redirect to a confirmation page or back to the book appointment page
@@ -57,6 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $error = "Error booking appointment: " . $e->getMessage();
             }
         }
+    } catch (PDOException $e) {
+        $error = "Error fetching patient record: " . $e->getMessage();
     }
 }
 ?>

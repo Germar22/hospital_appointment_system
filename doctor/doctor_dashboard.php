@@ -19,6 +19,20 @@ $stmt = $pdo->prepare("SELECT a.id AS appointment_id, p.name AS patient_name, d.
                       ORDER BY a.appointment_date");
 $stmt->execute([$doctor_id]);
 $appointments = $stmt->fetchAll();
+
+// Handle appointment approval
+if (isset($_POST['approve'])) {
+    $appointment_id = $_POST['appointment_id'];
+
+    $stmt = $pdo->prepare("UPDATE appointments SET status = 'Approved' WHERE id = ?");
+    $stmt->execute([$appointment_id]);
+
+    // Notify admin and patient
+    // ...
+
+    header("Location: doctor_dashboard.php"); // Redirect after update
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -41,21 +55,6 @@ $appointments = $stmt->fetchAll();
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            .logout {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-        }
-        .logout a {
-            background-color: #dc3545;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            text-decoration: none;
-        }
-        .logout a:hover {
-            background-color: #c82333;
-        }
         }
         h2 {
             text-align: center;
@@ -92,6 +91,9 @@ $appointments = $stmt->fetchAll();
         .status.Cancelled {
             background-color: #dc3545;
         }
+        .status.Approved {
+            background-color: #007bff;
+        }
         .nav-links {
             text-align: center;
             margin-top: 20px;
@@ -122,6 +124,7 @@ $appointments = $stmt->fetchAll();
                     <th>Doctor Name</th>
                     <th>Appointment Date</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -133,11 +136,19 @@ $appointments = $stmt->fetchAll();
                             <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
                             <td><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
                             <td><span class="status <?php echo htmlspecialchars($appointment['status']); ?>"><?php echo htmlspecialchars($appointment['status']); ?></span></td>
+                            <td>
+                                <?php if ($appointment['status'] === 'Pending'): ?>
+                                    <form method="post" action="">
+                                        <input type="hidden" name="appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">
+                                        <button type="submit" name="approve">Approve</button>
+                                    </form>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5">No appointments found.</td>
+                        <td colspan="6">No appointments found.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -147,8 +158,8 @@ $appointments = $stmt->fetchAll();
             <a href="doctor_dashboard.php">Back to Dashboard</a>
         </div>
 
-        <div class="logout">
-            <a href="../logout.php">Log Out</a>
+        <div class="nav-links">
+            <a href="../logout.php">Logout</a>
         </div>
     </div>
 </body>

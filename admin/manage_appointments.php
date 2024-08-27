@@ -8,11 +8,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     exit();
 }
 
-// Fetch all appointments
-$stmt = $pdo->query("SELECT a.id AS appointment_id, p.name AS patient_name, d.name AS doctor_name, a.appointment_date, a.status
+// Fetch all appointments with correct joins
+$stmt = $pdo->query("SELECT a.id AS appointment_id, u_patient.name AS patient_name, u_doctor.name AS doctor_name, a.appointment_date, a.status
                       FROM appointments a
                       JOIN patients p ON a.patient_id = p.id
+                      JOIN users u_patient ON p.user_id = u_patient.id
                       JOIN doctors d ON a.doctor_id = d.id
+                      JOIN users u_doctor ON d.user_id = u_doctor.id
                       ORDER BY a.appointment_date");
 $appointments = $stmt->fetchAll();
 ?>
@@ -31,7 +33,7 @@ $appointments = $stmt->fetchAll();
             padding: 0;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 50px auto;
             padding: 20px;
             background-color: #fff;
@@ -45,21 +47,28 @@ $appointments = $stmt->fetchAll();
         table {
             width: 100%;
             border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
         }
         th, td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
         }
         th {
             background-color: #007bff;
             color: white;
         }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
         tr:hover {
-            background-color: #f5f5f5;
+            background-color: #ddd;
         }
         .status {
-            padding: 5px;
+            display: inline-block;
+            padding: 5px 10px;
             border-radius: 4px;
             color: white;
             text-align: center;
@@ -67,11 +76,14 @@ $appointments = $stmt->fetchAll();
         .status.Pending {
             background-color: #ffc107;
         }
-        .status.Completed {
+        .status.Confirmed {
             background-color: #28a745;
         }
         .status.Cancelled {
             background-color: #dc3545;
+        }
+        .status.Approved {
+            background-color: #28a745;
         }
         .nav-links {
             text-align: center;
@@ -100,7 +112,7 @@ $appointments = $stmt->fetchAll();
                 <tr>
                     <th>Appointment ID</th>
                     <th>Patient Name</th>
-                    <th>Appointed Doctor</th>
+                    <th>Doctor Name</th>
                     <th>Appointment Date</th>
                     <th>Status</th>
                 </tr>

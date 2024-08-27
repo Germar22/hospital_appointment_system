@@ -7,6 +7,9 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: ../index.php"); // Redirect to login page if not logged in
     exit();
 }
+
+// Optional: You can add additional logic here if needed
+
 ?>
 
 <!DOCTYPE html>

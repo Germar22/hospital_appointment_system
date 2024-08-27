@@ -3,26 +3,38 @@ session_start();
 include '../db.php'; // Ensure this path is correct
 
 // Check if user is logged in
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'patient') {
-    header("Location: ../index.php"); // Redirect to login page if not logged in or not a patient
+if (!isset($_SESSION['user_id'])) {
+    header("Location: ../index.php"); // Redirect to login page if not logged in
     exit();
 }
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch user details
+// Fetch patient details (name and email)
 $stmt = $pdo->prepare("SELECT name, email FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
 
-// Fetch upcoming appointments
+// Debug: Check if patient details are fetched
+if (!$user) {
+    echo "Error: User details not found.";
+    exit();
+}
+
+// Fetch all appointments for the patient, including newly booked ones
 $stmt = $pdo->prepare("SELECT d.name AS doctor_name, a.appointment_date, a.status
-                        FROM appointments a
-                        JOIN doctors d ON a.doctor_id = d.id
-                        WHERE a.patient_id = ? AND a.appointment_date >= NOW()
-                        ORDER BY a.appointment_date");
+                       FROM appointments a
+                       JOIN doctors d ON a.doctor_id = d.id
+                       WHERE a.patient_id = ?
+                       ORDER BY a.appointment_date");
 $stmt->execute([$user_id]);
 $appointments = $stmt->fetchAll();
+
+// Debug: Check if appointments are fetched
+if ($appointments === false) {
+    echo "Error: Failed to fetch appointments.";
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -65,7 +77,8 @@ $appointments = $stmt->fetchAll();
             text-align: left;
         }
         th {
-            background-color: #f4f4f4;
+            background-color: #007bff;
+            color: #fff;
         }
         .status {
             display: inline-block;
@@ -73,21 +86,22 @@ $appointments = $stmt->fetchAll();
             border-radius: 4px;
             color: #fff;
         }
+        .status.Approved {
+            background-color: #28a745;
+        }
         .status.Pending {
             background-color: #ffc107;
-        }
-        .status.Confirmed {
-            background-color: #28a745;
         }
         .status.Cancelled {
             background-color: #dc3545;
         }
         .nav-links {
             margin-top: 20px;
+            text-align: center;
         }
         .nav-links a {
             display: inline-block;
-            margin-right: 15px;
+            margin: 0 10px;
             padding: 10px 15px;
             color: #007bff;
             text-decoration: none;
@@ -99,15 +113,12 @@ $appointments = $stmt->fetchAll();
             background-color: #007bff;
             color: #fff;
         }
-        .nav-links a:last-child {
-            margin-right: 0;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Welcome, <?php echo htmlspecialchars($user['name']); ?></h2>
-        <h3>Upcoming Appointments</h3>
+        <h3>Notifications</h3>
         <?php if (!empty($appointments)): ?>
             <table>
                 <thead>
@@ -128,7 +139,7 @@ $appointments = $stmt->fetchAll();
                 </tbody>
             </table>
         <?php else: ?>
-            <p>No upcoming appointments.</p>
+            <p>No appointments found.</p>
         <?php endif; ?>
 
         <div class="nav-links">

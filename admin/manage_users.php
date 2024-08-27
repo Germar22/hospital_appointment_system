@@ -4,7 +4,7 @@ include '../db.php'; // Adjust path if needed
 
 // Check if user is logged in and is an admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'admin') {
-    header("Location: login.php");
+    header("Location: ../index.php"); // Redirect to login page if not logged in or not an admin
     exit();
 }
 
@@ -59,8 +59,21 @@ $users = $stmt->fetchAll();
         th {
             background-color: #f4f4f4;
         }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #e9e9e9;
+        }
+        .actions a {
+            margin-right: 10px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .actions a:hover {
+            text-decoration: underline;
+        }
         .logout {
-            display: block;
             text-align: center;
             margin-top: 20px;
         }
@@ -102,8 +115,7 @@ $users = $stmt->fetchAll();
                     <td><?php echo htmlspecialchars($user['name']); ?></td>
                     <td><?php echo htmlspecialchars($user['email']); ?></td>
                     <td><?php echo htmlspecialchars($user['user_type']); ?></td>
-                    <td>
-                        <!-- Add actions like edit or delete here -->
+                    <td class="actions">
                         <a href="edit_user.php?id=<?php echo $user['id']; ?>">Edit</a>
                         <a href="delete_user.php?id=<?php echo $user['id']; ?>">Delete</a>
                     </td>

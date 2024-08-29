@@ -11,12 +11,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'doctor') {
 $doctor_id = $_SESSION['user_id']; // Assuming doctor_id is stored in session after login
 
 // Fetch appointments for the logged-in doctor
-$stmt = $pdo->prepare("SELECT a.id AS appointment_id, p.name AS patient_name, d.name AS doctor_name, a.appointment_date, a.status
-                      FROM appointments a
-                      JOIN patients p ON a.patient_id = p.id
-                      JOIN doctors d ON a.doctor_id = d.id
-                      WHERE d.user_id = ? 
-                      ORDER BY a.appointment_date");
+$stmt = $pdo->prepare("
+    SELECT a.id AS appointment_id, p.name AS patient_name, a.appointment_date, a.status
+    FROM appointments a
+    JOIN patients p ON a.patient_id = p.id
+    JOIN doctors d ON a.doctor_id = d.id
+    WHERE d.user_id = ? 
+    ORDER BY a.appointment_date DESC
+");
 $stmt->execute([$doctor_id]);
 $appointments = $stmt->fetchAll();
 
@@ -27,7 +29,7 @@ if (isset($_POST['approve'])) {
     $stmt = $pdo->prepare("UPDATE appointments SET status = 'Approved' WHERE id = ?");
     $stmt->execute([$appointment_id]);
 
-    // Notify admin and patient
+    // Notify admin and patient (this can be implemented as needed)
     // ...
 
     header("Location: doctor_dashboard.php"); // Redirect after update
@@ -60,9 +62,16 @@ if (isset($_POST['approve'])) {
             text-align: center;
             color: #333;
         }
+        .table-wrapper {
+            max-height: 400px; /* Adjust as needed */
+            overflow-y: auto;
+            border: 1px solid #ddd; /* Optional: adds a border around the table */
+            border-radius: 4px; /* Optional: rounds the corners */
+        }
         table {
             width: 100%;
             border-collapse: collapse;
+            margin: 0; /* Remove default margin */
         }
         th, td {
             padding: 12px;
@@ -85,14 +94,11 @@ if (isset($_POST['approve'])) {
         .status.Pending {
             background-color: #ffc107;
         }
-        .status.Completed {
-            background-color: #28a745;
+        .status.Approved {
+            background-color: #007bff;
         }
         .status.Cancelled {
             background-color: #dc3545;
-        }
-        .status.Approved {
-            background-color: #007bff;
         }
         .nav-links {
             text-align: center;
@@ -111,54 +117,66 @@ if (isset($_POST['approve'])) {
         .nav-links a:hover {
             background-color: #0056b3;
         }
+        .action-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .action-button:hover {
+            background-color: #0056b3;
+        }
+        form {
+            margin: 0; /* Remove default form margin */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Your Appointments</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Appointment ID</th>
-                    <th>Patient Name</th>
-                    <th>Doctor Name</th>
-                    <th>Appointment Date</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($appointments)): ?>
-                    <?php foreach ($appointments as $appointment): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
-                            <td><?php echo htmlspecialchars($appointment['patient_name']); ?></td>
-                            <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
-                            <td><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
-                            <td><span class="status <?php echo htmlspecialchars($appointment['status']); ?>"><?php echo htmlspecialchars($appointment['status']); ?></span></td>
-                            <td>
-                                <?php if ($appointment['status'] === 'Pending'): ?>
-                                    <form method="post" action="">
-                                        <input type="hidden" name="appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">
-                                        <button type="submit" name="approve">Approve</button>
-                                    </form>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
+        <div class="table-wrapper">
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="6">No appointments found.</td>
+                        <th>Appointment ID</th>
+                        <th>Patient Name</th>
+                        <th>Appointment Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
                     </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-
-        <div class="nav-links">
-            <a href="doctor_dashboard.php">Back to Dashboard</a>
+                </thead>
+                <tbody>
+                    <?php if (!empty($appointments)): ?>
+                        <?php foreach ($appointments as $appointment): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
+                                <td><?php echo htmlspecialchars($appointment['patient_name']); ?></td>
+                                <td><?php echo htmlspecialchars(date('F j, Y, g:i a', strtotime($appointment['appointment_date']))); ?></td>
+                                <td><span class="status <?php echo htmlspecialchars($appointment['status']); ?>"><?php echo htmlspecialchars($appointment['status']); ?></span></td>
+                                <td>
+                                    <?php if ($appointment['status'] === 'Pending'): ?>
+                                        <form method="post" action="">
+                                            <input type="hidden" name="appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">
+                                            <button type="submit" name="approve" class="action-button">Approve</button>
+                                        </form>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5">No appointments found.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
 
         <div class="nav-links">
+            <a href="doctor_dashboard.php">Back to Dashboard</a>
             <a href="../logout.php">Logout</a>
         </div>
     </div>

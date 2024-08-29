@@ -9,17 +9,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $user_type = $_POST['user_type'];
     $specialization = isset($_POST['specialization']) ? $_POST['specialization'] : '';
 
+    // Combine start and end times into a single string for availability schedule
+    $start_time = isset($_POST['start_time']) ? $_POST['start_time'] : '';
+    $end_time = isset($_POST['end_time']) ? $_POST['end_time'] : '';
+    $availability_schedule = $start_time && $end_time ? "$start_time to $end_time" : '';
+
+    // Insert user data
     $stmt = $pdo->prepare("INSERT INTO users (name, email, password, user_type) VALUES (?, ?, ?, ?)");
     $stmt->execute([$name, $email, $password, $user_type]);
 
     $user_id = $pdo->lastInsertId();
 
+    // Insert additional data based on user type
     if ($user_type === 'doctor') {
-        $stmt = $pdo->prepare("INSERT INTO doctors (user_id, specialization) VALUES (?, ?)");
-        $stmt->execute([$user_id, $specialization]);
+        $stmt = $pdo->prepare("INSERT INTO doctors (user_id, name, specialization, availability_schedule) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$user_id, $name, $specialization, $availability_schedule]);
     } elseif ($user_type === 'patient') {
-        $stmt = $pdo->prepare("INSERT INTO patients (user_id) VALUES (?)");
-        $stmt->execute([$user_id]);
+        $stmt = $pdo->prepare("INSERT INTO patients (user_id, name, email) VALUES (?, ?, ?)");
+        $stmt->execute([$user_id, $name, $email]);
     }
 
     $_SESSION['user_id'] = $user_id;
@@ -28,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     exit();
 }
 ?>
+
 
 
 <!DOCTYPE html>
@@ -63,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         input[type="text"],
         input[type="email"],
         input[type="password"],
+        textarea,
         select {
             width: 100%;
             padding: 10px;
@@ -124,6 +133,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div id="specialization_container" class="specialization-container">
             <label for="specialization">Specialization:</label>
             <input type="text" id="specialization" name="specialization">
+
+            <label for="availability_schedule">Availability Schedule:</label>
+            <input type="time" id="start_time" name="start_time">
+            <input type="time" id="end_time" name="end_time">
+            <p>Provide the available start and end times.</p>
         </div>
 
         <input type="submit" value="Register">
@@ -133,6 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <p>Already have an account? <a href="index.php">Login here</a></p>
     </div>
 </div>
+
 
 <script>
     document.getElementById('user_type').addEventListener('change', function() {

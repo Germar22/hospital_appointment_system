@@ -2,61 +2,61 @@
 session_start();
 include '../db.php'; // Ensure this path is correct
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../index.php"); // Redirect to login page if not logged in
+// Check if user is logged in and is a patient
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'patient') {
+    header("Location: ../index.php"); // Redirect to login page if not logged in or not a patient
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
-
-// Fetch doctors for dropdown by joining with users table and filtering by user_type = 'doctor'
-try {
-    $stmt = $pdo->query("SELECT d.id, u.name 
-                         FROM doctors d 
-                         JOIN users u ON d.user_id = u.id 
-                         WHERE u.user_type = 'doctor'");
-    $doctors = $stmt->fetchAll();
-
-    // Debug: Check if doctors are fetched
-    if (empty($doctors)) {
-        $error = "No doctors found.";
-    }
-} catch (PDOException $e) {
-    $error = "Error fetching doctors: " . $e->getMessage();
-}
+$patient_user_id = $_SESSION['user_id']; // Fetch the patient_id from session
 
 // Handle form submission
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $doctor_id = $_POST['doctor_id'];
     $appointment_date = $_POST['appointment_date'];
 
-    // Fetch the patient ID using the user_id from the session
-    try {
-        $stmt = $pdo->prepare("SELECT id FROM patients WHERE user_id = ?");
-        $stmt->execute([$user_id]);
+    // Ensure form data is valid
+    if (empty($doctor_id) || empty($appointment_date)) {
+        $error_message = "Doctor ID and appointment date are required.";
+    } elseif (strtotime($appointment_date) < time()) {
+        $error_message = "The appointment date cannot be in the past.";
+    } else {
+        // Check if the patient exists and fetch patient name
+        $stmt = $pdo->prepare("SELECT id, name FROM patients WHERE user_id = ?");
+        $stmt->execute([$patient_user_id]);
         $patient = $stmt->fetch();
 
         if (!$patient) {
-            $error = "Patient record not found.";
+            $error_message = "No patient record found for the logged-in user.";
         } else {
             $patient_id = $patient['id'];
+            $patient_name = $patient['name'];
 
-            // Insert appointment into database
-            try {
-                $stmt = $pdo->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, status, created_at, updated_at) 
-                                       VALUES (?, ?, ?, 'Pending', NOW(), NOW())");
-                $stmt->execute([$patient_id, $doctor_id, $appointment_date]);
+            // Get doctor name
+            $stmt = $pdo->prepare("SELECT name FROM doctors WHERE id = ?");
+            $stmt->execute([$doctor_id]);
+            $doctor = $stmt->fetch();
 
-                // Redirect to a confirmation page or back to the book appointment page
-                header("Location: appointment_confirmation.php");
-                exit();
-            } catch (PDOException $e) {
-                $error = "Error booking appointment: " . $e->getMessage();
+            if (!$doctor) {
+                $error_message = "Invalid doctor ID.";
+            } else {
+                $doctor_name = $doctor['name'];
+
+                // Prepare and execute SQL statement with patient_name and doctor_name
+                $stmt = $pdo->prepare("
+                    INSERT INTO appointments (patient_id, doctor_id, patient_name, doctor_name, appointment_date, status, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, 'Pending', NOW(), NOW())
+                ");
+                if ($stmt->execute([$patient_id, $doctor_id, $patient_name, $doctor_name, $appointment_date])) {
+                    $success_message = "Appointment booked successfully.";
+                    // Redirect or show success message
+                    header("Location: patient_dashboard.php"); // Adjust as needed
+                    exit();
+                } else {
+                    $error_message = "Failed to book appointment. Please try again.";
+                }
             }
         }
-    } catch (PDOException $e) {
-        $error = "Error fetching patient record: " . $e->getMessage();
     }
 }
 ?>
@@ -70,96 +70,94 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #f4f7f6;
             margin: 0;
             padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
         .container {
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
         }
         h2 {
-            text-align: center;
+            margin-bottom: 20px;
             color: #333;
         }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
         label {
-            display: block;
-            margin-bottom: 8px;
+            text-align: left;
             color: #555;
+            font-size: 14px;
         }
-        select, input[type="text"], input[type="datetime-local"] {
-            width: 100%;
+        input[type="datetime-local"], select, button {
             padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
         }
-        input[type="submit"] {
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
-            color: #fff;
+        button {
+            background-color: #4CAF50;
+            color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 16px;
             cursor: pointer;
         }
-        input[type="submit"]:hover {
-            background-color: #0056b3;
+        button:hover {
+            background-color: #45a049;
         }
-        .error {
-            color: red;
-            text-align: center;
+        .message {
+            padding: 10px;
             margin-bottom: 15px;
+            border-radius: 5px;
+            text-align: left;
         }
-        .back-button {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
         }
-        .back-button a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .back-button a:hover {
-            text-decoration: underline;
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
         }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <h2>Book Appointment</h2>
-
-    <?php if (isset($error)): ?>
-        <div class="error"><?php echo htmlspecialchars($error); ?></div>
-    <?php endif; ?>
-
-    <form method="post" action="">
-        <label for="doctor_id">Select Doctor:</label>
-        <select id="doctor_id" name="doctor_id" required>
-            <option value="">Select a doctor</option>
-            <?php foreach ($doctors as $doctor): ?>
-                <option value="<?php echo htmlspecialchars($doctor['id']); ?>">
-                    <?php echo htmlspecialchars($doctor['name']); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <label for="appointment_date">Appointment Date and Time:</label>
-        <input type="datetime-local" id="appointment_date" name="appointment_date" required>
-
-        <input type="submit" value="Book Appointment">
-    </form>
-
-    <div class="back-button">
-        <a href="patient_dashboard.php">Back to Dashboard</a>
+    <div class="container">
+        <h2>Book an Appointment</h2>
+        <?php if (isset($success_message)): ?>
+            <div class="message success"><?php echo htmlspecialchars($success_message); ?></div>
+        <?php elseif (isset($error_message)): ?>
+            <div class="message error"><?php echo htmlspecialchars($error_message); ?></div>
+        <?php endif; ?>
+        <form method="post" action="">
+            <label for="doctor_id">Select Doctor:</label>
+            <select id="doctor_id" name="doctor_id" required>
+                <option value="" disabled selected>Select a doctor</option>
+                <?php
+                // Fetch available doctors
+                $stmt = $pdo->query("SELECT id, name FROM doctors");
+                while ($row = $stmt->fetch()) {
+                    echo "<option value=\"" . htmlspecialchars($row['id']) . "\">" . htmlspecialchars($row['name']) . "</option>";
+                }
+                ?>
+            </select>
+            <label for="appointment_date">Appointment Date:</label>
+            <input type="datetime-local" id="appointment_date" name="appointment_date" required>
+            <button type="submit">Book Appointment</button>
+        </form>
     </div>
-</div>
-
 </body>
 </html>

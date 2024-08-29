@@ -2,20 +2,22 @@
 session_start();
 include '../db.php'; // Ensure this path is correct
 
-// Check if user is logged in and is an admin
+// Check if the user is logged in and is an admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     header("Location: ../index.php"); // Redirect to login page if not logged in or not an admin
     exit();
 }
 
-// Fetch all appointments with correct joins
-$stmt = $pdo->query("SELECT a.id AS appointment_id, u_patient.name AS patient_name, u_doctor.name AS doctor_name, a.appointment_date, a.status
-                      FROM appointments a
-                      JOIN patients p ON a.patient_id = p.id
-                      JOIN users u_patient ON p.user_id = u_patient.id
-                      JOIN doctors d ON a.doctor_id = d.id
-                      JOIN users u_doctor ON d.user_id = u_doctor.id
-                      ORDER BY a.appointment_date");
+// Fetch appointments data
+$stmt = $pdo->query("
+    SELECT a.id AS appointment_id, u_patient.name AS patient_name, u_doctor.name AS doctor_name, a.appointment_date, a.status
+    FROM appointments a
+    JOIN patients p ON a.patient_id = p.id
+    JOIN users u_patient ON p.user_id = u_patient.id
+    JOIN doctors d ON a.doctor_id = d.id
+    JOIN users u_doctor ON d.user_id = u_doctor.id
+    ORDER BY a.appointment_date DESC
+");
 $appointments = $stmt->fetchAll();
 ?>
 
@@ -38,16 +40,39 @@ $appointments = $stmt->fetchAll();
             padding: 20px;
             background-color: #fff;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
         h2 {
             text-align: center;
             color: #333;
+            margin-bottom: 20px;
+        }
+        .back-button {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+        }
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+        .table-wrapper {
+            max-height: 500px; /* Set max height for table */
+            overflow-y: auto; /* Enable vertical scrollbar if needed */
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin-top: 20px;
         }
         table, th, td {
             border: 1px solid #ddd;
@@ -58,86 +83,72 @@ $appointments = $stmt->fetchAll();
         }
         th {
             background-color: #007bff;
-            color: white;
+            color: #fff;
         }
         tr:nth-child(even) {
-            background-color: #f2f2f2;
+            background-color: #f9f9f9;
         }
         tr:hover {
-            background-color: #ddd;
+            background-color: #e9ecef;
         }
         .status {
             display: inline-block;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 4px;
-            color: white;
+            color: #fff;
             text-align: center;
-        }
-        .status.Pending {
-            background-color: #ffc107;
-        }
-        .status.Confirmed {
-            background-color: #28a745;
-        }
-        .status.Cancelled {
-            background-color: #dc3545;
         }
         .status.Approved {
             background-color: #28a745;
         }
-        .nav-links {
+        .status.Pending {
+            background-color: #ffc107;
+        }
+        .status.Cancelled {
+            background-color: #dc3545;
+        }
+        .no-appointments {
             text-align: center;
+            color: #999;
             margin-top: 20px;
-        }
-        .nav-links a {
-            display: inline-block;
-            margin: 5px;
-            padding: 10px;
-            background-color: #007bff;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .nav-links a:hover {
-            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <a href="admin_dashboard.php" class="back-button">Back to Admin Dashboard</a>
         <h2>Manage Appointments</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Appointment ID</th>
-                    <th>Patient Name</th>
-                    <th>Doctor Name</th>
-                    <th>Appointment Date</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($appointments)): ?>
-                    <?php foreach ($appointments as $appointment): ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
-                            <td><?php echo htmlspecialchars($appointment['patient_name']); ?></td>
-                            <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
-                            <td><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
-                            <td><span class="status <?php echo htmlspecialchars($appointment['status']); ?>"><?php echo htmlspecialchars($appointment['status']); ?></span></td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
+        <div class="table-wrapper">
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="5">No appointments found.</td>
+                        <th>Appointment ID</th>
+                        <th>Patient Name</th>
+                        <th>Doctor Name</th>
+                        <th>Appointment Date</th>
+                        <th>Status</th>
                     </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-
-        <div class="nav-links">
-            <a href="admin_dashboard.php">Back to Dashboard</a>
+                </thead>
+                <tbody>
+                    <?php if (!empty($appointments)): ?>
+                        <?php foreach ($appointments as $appointment): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
+                                <td><?php echo htmlspecialchars($appointment['patient_name']); ?></td>
+                                <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
+                                <td><?php echo htmlspecialchars(date('F j, Y, g:i a', strtotime($appointment['appointment_date']))); ?></td>
+                                <td class="status <?php echo htmlspecialchars($appointment['status']); ?>">
+                                    <?php echo htmlspecialchars($appointment['status']); ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5" class="no-appointments">No appointments found.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 </body>

@@ -15,26 +15,42 @@ $stmt = $pdo->prepare("SELECT name, email FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
 
-// Debug: Check if patient details are fetched
+// Handle case where user details are not found
 if (!$user) {
-    echo "Error: User details not found.";
+    echo "<p>Error: User details not found. Please contact support.</p>";
     exit();
 }
 
-// Fetch all appointments for the patient, including newly booked ones
-$stmt = $pdo->prepare("SELECT d.name AS doctor_name, a.appointment_date, a.status
-                       FROM appointments a
-                       JOIN doctors d ON a.doctor_id = d.id
-                       WHERE a.patient_id = ?
-                       ORDER BY a.appointment_date");
+// Fetch patient_id from the users table
+$stmt = $pdo->prepare("SELECT id FROM patients WHERE user_id = ?");
 $stmt->execute([$user_id]);
+$patient = $stmt->fetch();
+
+if (!$patient) {
+    echo "<p>Error: Patient record not found. Please contact support.</p>";
+    exit();
+}
+
+$patient_id = $patient['id'];
+
+// Fetch all appointments for the patient
+$stmt = $pdo->prepare("
+    SELECT a.id AS appointment_id, u_doctor.name AS doctor_name, a.appointment_date, a.status
+    FROM appointments a
+    JOIN doctors d ON a.doctor_id = d.id
+    JOIN users u_doctor ON d.user_id = u_doctor.id
+    WHERE a.patient_id = ?
+    ORDER BY a.appointment_date DESC
+");
+$stmt->execute([$patient_id]);
 $appointments = $stmt->fetchAll();
 
-// Debug: Check if appointments are fetched
+// Handle case where no appointments are found
 if ($appointments === false) {
-    echo "Error: Failed to fetch appointments.";
+    echo "<p>Error: Failed to fetch appointments. Please try again later.</p>";
     exit();
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -56,18 +72,26 @@ if ($appointments === false) {
             padding: 20px;
             background-color: #fff;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Ensure content doesn't overflow */
         }
         h2 {
             color: #333;
+            text-align: center;
         }
         h3 {
             color: #555;
+            text-align: center;
+        }
+        .table-wrapper {
+            max-height: 400px; /* Set the maximum height for the table */
+            overflow-y: auto; /* Enable vertical scrollbar if needed */
+            margin-bottom: 20px; /* Space below the table */
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 0; /* Remove extra margins */
         }
         table, th, td {
             border: 1px solid #ddd;
@@ -75,16 +99,25 @@ if ($appointments === false) {
         th, td {
             padding: 12px;
             text-align: left;
+            vertical-align: middle; /* Align text vertically in the middle */
         }
         th {
             background-color: #007bff;
             color: #fff;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e9ecef;
         }
         .status {
             display: inline-block;
             padding: 5px 10px;
             border-radius: 4px;
             color: #fff;
+            text-align: center;
         }
         .status.Approved {
             background-color: #28a745;
@@ -113,33 +146,42 @@ if ($appointments === false) {
             background-color: #007bff;
             color: #fff;
         }
+        .no-appointments {
+            text-align: center;
+            color: #999;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h2>Welcome, <?php echo htmlspecialchars($user['name']); ?></h2>
-        <h3>Notifications</h3>
+        <h3>Your Recent Appointments</h3>
         <?php if (!empty($appointments)): ?>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Doctor Name</th>
-                        <th>Appointment Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($appointments as $appointment): ?>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
                         <tr>
-                            <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
-                            <td><?php echo htmlspecialchars($appointment['appointment_date']); ?></td>
-                            <td><span class="status <?php echo htmlspecialchars($appointment['status']); ?>"><?php echo htmlspecialchars($appointment['status']); ?></span></td>
+                            <th>Doctor Name</th>
+                            <th>Appointment Date</th>
+                            <th>Status</th>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($appointments as $appointment): ?>
+                            <tr>
+                                <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
+                                <td><?php echo htmlspecialchars(date('F j, Y, g:i a', strtotime($appointment['appointment_date']))); ?></td>
+                                <td class="status <?php echo htmlspecialchars($appointment['status']); ?>">
+                                    <?php echo htmlspecialchars($appointment['status']); ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         <?php else: ?>
-            <p>No appointments found.</p>
+            <p class="no-appointments">You have no appointments at this time.</p>
         <?php endif; ?>
 
         <div class="nav-links">

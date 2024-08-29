@@ -2,38 +2,44 @@
 session_start();
 include 'db.php'; // Ensure this path is correct
 
+$login_error = '';
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
+    $email = trim($_POST['email']);
+    $password = trim($_POST['password']);
 
-    // Prepare and execute the query to fetch user data
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
-    $stmt->execute([$email]);
-    $user = $stmt->fetch();
+    if (!empty($email) && !empty($password)) {
+        // Prepare and execute the query to fetch user data
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
 
-    if ($user && password_verify($password, $user['password'])) {
-        // Set session variables
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_type'] = $user['user_type']; // Add user type to session
+        if ($user && password_verify($password, $user['password'])) {
+            // Set session variables
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_type'] = $user['user_type']; // Add user type to session
 
-        // Redirect based on user type
-        if ($user['user_type'] === 'patient') {
-            header("Location: user/patient_dashboard.php");
+            // Redirect based on user type
+            switch ($user['user_type']) {
+                case 'patient':
+                    header("Location: user/patient_dashboard.php");
+                    break;
+                case 'doctor':
+                    header("Location: doctor/doctor_dashboard.php");
+                    break;
+                case 'admin':
+                    header("Location: admin/admin_dashboard.php");
+                    break;
+            }
+            exit();
+        } else {
+            $login_error = 'Invalid email or password.';
         }
-        if ($user['user_type'] === 'doctor') {
-            header("Location: doctor/doctor_dashboard.php");
-        }
-        if ($user['user_type'] === 'admin') {
-            header("Location: admin/admin_dashboard.php");
-        }
-        exit();
     } else {
-        echo 'Invalid credentials.';
+        $login_error = 'Please fill in both fields.';
     }
 }
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -44,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #e9ecef;
             margin: 0;
             padding: 0;
             display: flex;
@@ -54,41 +60,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         .login-container {
             background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             max-width: 400px;
             width: 100%;
-            margin: 20px;
+            text-align: center; /* Center the content inside the container */
         }
         .login-container h1 {
-            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #333;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center the form elements */
         }
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
         }
         .form-group input {
-            width: 100%;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
+            width: 80%; /* Adjust the width of the input fields */
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            text-align: center; /* Center the text inside the input fields */
         }
         .form-group input[type="submit"] {
             background-color: #007bff;
             color: white;
             border: none;
             cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 50%;
         }
         .form-group input[type="submit"]:hover {
             background-color: #0056b3;
         }
         .register-link {
             text-align: center;
-            margin-top: 15px;
+            margin-top: 20px;
         }
         .register-link a {
             color: #007bff;
@@ -99,8 +116,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         .error {
             color: #dc3545;
-            margin-top: 10px;
+            margin-top: 15px;
             text-align: center;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -108,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <div class="login-container">
     <h1>Login</h1>
-    <?php if (isset($login_error)): ?>
+    <?php if (!empty($login_error)): ?>
         <div class="error"><?php echo htmlspecialchars($login_error); ?></div>
     <?php endif; ?>
     <form method="post">

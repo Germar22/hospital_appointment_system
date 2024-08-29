@@ -109,14 +109,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100%;
             box-sizing: border-box;
         }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+        }
         button {
             background-color: #4CAF50;
             color: white;
             border: none;
             cursor: pointer;
+            padding: 10px;
+            width: 48%;
         }
         button:hover {
             background-color: #45a049;
+        }
+        .cancel-button {
+            background-color: #f44336;
+        }
+        .cancel-button:hover {
+            background-color: #d32f2f;
         }
         .message {
             padding: 10px;
@@ -156,7 +168,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </select>
             <label for="appointment_date">Appointment Date:</label>
             <input type="datetime-local" id="appointment_date" name="appointment_date" required>
-            <button type="submit">Book Appointment</button>
+            <div class="button-container">
+                <button type="submit">Book Appointment</button>
+                <button type="button" class="cancel-button" onclick="window.location.href='patient_dashboard.php'">Cancel</button>
+            </div>
         </form>
     </div>
 </body>

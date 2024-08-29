@@ -22,17 +22,14 @@ $stmt = $pdo->prepare("
 $stmt->execute([$doctor_id]);
 $appointments = $stmt->fetchAll();
 
-// Handle appointment approval
-if (isset($_POST['approve'])) {
+// Handle appointment approval through AJAX request
+if (isset($_POST['ajax_approve'])) {
     $appointment_id = $_POST['appointment_id'];
 
     $stmt = $pdo->prepare("UPDATE appointments SET status = 'Approved' WHERE id = ?");
     $stmt->execute([$appointment_id]);
 
-    // Notify admin and patient (this can be implemented as needed)
-    // ...
-
-    header("Location: doctor_dashboard.php"); // Redirect after update
+    echo "Success"; // Respond with success message
     exit();
 }
 ?>
@@ -43,6 +40,7 @@ if (isset($_POST['approve'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Doctor Dashboard - Appointments</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -51,7 +49,7 @@ if (isset($_POST['approve'])) {
             padding: 0;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 50px auto;
             padding: 20px;
             background-color: #fff;
@@ -95,7 +93,7 @@ if (isset($_POST['approve'])) {
             background-color: #ffc107;
         }
         .status.Approved {
-            background-color: #007bff;
+            background-color: #307f1b;
         }
         .status.Cancelled {
             background-color: #dc3545;
@@ -121,7 +119,7 @@ if (isset($_POST['approve'])) {
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 6px 12px;
+            padding: 5px 12px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
@@ -132,7 +130,7 @@ if (isset($_POST['approve'])) {
         form {
             margin: 0; /* Remove default form margin */
         }
-    </style>
+        </style>
 </head>
 <body>
     <div class="container">
@@ -158,10 +156,7 @@ if (isset($_POST['approve'])) {
                                 <td><span class="status <?php echo htmlspecialchars($appointment['status']); ?>"><?php echo htmlspecialchars($appointment['status']); ?></span></td>
                                 <td>
                                     <?php if ($appointment['status'] === 'Pending'): ?>
-                                        <form method="post" action="">
-                                            <input type="hidden" name="appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">
-                                            <button type="submit" name="approve" class="action-button">Approve</button>
-                                        </form>
+                                        <button class="action-button approve-btn" data-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">Approve</button>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -176,9 +171,31 @@ if (isset($_POST['approve'])) {
         </div>
 
         <div class="nav-links">
-            <a href="doctor_dashboard.php">Back to Dashboard</a>
             <a href="../logout.php">Logout</a>
         </div>
     </div>
+
+    <script>
+        $(document).ready(function() {
+            $('.approve-btn').click(function() {
+                var button = $(this);
+                var appointmentId = button.data('id');
+
+                $.ajax({
+                    type: 'POST',
+                    url: 'doctor_dashboard.php',
+                    data: { ajax_approve: true, appointment_id: appointmentId },
+                    success: function(response) {
+                        if (response === "Success") {
+                            button.closest('tr').find('.status').removeClass('Pending').addClass('Approved').text('Approved');
+                            button.remove(); // Remove the button after approval
+                        } else {
+                            alert('Failed to approve the appointment. Please try again.');
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

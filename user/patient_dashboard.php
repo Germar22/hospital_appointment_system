@@ -53,6 +53,10 @@ if ($appointments === false) {
 
 ?>
 
+<?php
+// Your PHP code here (unchanged)
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,12 +115,7 @@ if ($appointments === false) {
         }
         td.status {
             text-align: center; /* Center the text in the status column */
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        tr:hover {
-            background-color: #e9ecef;
+            vertical-align: middle; /* Vertically center the text */
         }
         .status {
             display: inline-block;
@@ -124,15 +123,22 @@ if ($appointments === false) {
             border-radius: 4px;
             color: #fff;
             text-align: center;
+            width: 86%; /* Make sure the status text spans the full width of the cell */
         }
         .status.Approved {
-            background-color: #28a745;
+            background-color: #307f1b;
         }
         .status.Pending {
             background-color: #ffc107;
         }
         .status.Cancelled {
             background-color: #dc3545;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #e9ecef;
         }
         .nav-links {
             margin-top: 20px;

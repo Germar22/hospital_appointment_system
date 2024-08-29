@@ -98,13 +98,19 @@ if ($appointments === false) {
         }
         th, td {
             padding: 12px;
-            text-align: left;
             vertical-align: middle; /* Align text vertically in the middle */
         }
         th {
             background-color: #007bff;
             color: #fff;
             font-weight: bold;
+            text-align: center;
+        }
+        td {
+            text-align: left; /* Default alignment for all cells */
+        }
+        td.status {
+            text-align: center; /* Center the text in the status column */
         }
         tr:nth-child(even) {
             background-color: #f2f2f2;

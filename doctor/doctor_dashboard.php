@@ -134,7 +134,7 @@ if (isset($_POST['ajax_approve'])) {
         }
 
         .action-button {
-            background-color: #007bff;
+            background-color: #1b8718;
             color: white;
             border: none;
             padding: 5px 12px;

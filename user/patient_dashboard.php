@@ -33,14 +33,14 @@ if (!$patient) {
 
 $patient_id = $patient['id'];
 
-// Fetch all appointments for the patient
+// Fetch all appointments for the patient, ordered by most recent appointment_id
 $stmt = $pdo->prepare("
     SELECT a.id AS appointment_id, u_doctor.name AS doctor_name, a.appointment_date, a.status
     FROM appointments a
     JOIN doctors d ON a.doctor_id = d.id
     JOIN users u_doctor ON d.user_id = u_doctor.id
     WHERE a.patient_id = ?
-    ORDER BY a.appointment_date DESC
+    ORDER BY a.id DESC
 ");
 $stmt->execute([$patient_id]);
 $appointments = $stmt->fetchAll();
@@ -50,11 +50,6 @@ if ($appointments === false) {
     echo "<p>Error: Failed to fetch appointments. Please try again later.</p>";
     exit();
 }
-
-?>
-
-<?php
-// Your PHP code here (unchanged)
 ?>
 
 <!DOCTYPE html>

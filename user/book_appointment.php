@@ -49,9 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ");
                 if ($stmt->execute([$patient_id, $doctor_id, $patient_name, $doctor_name, $appointment_date])) {
                     $success_message = "Appointment booked successfully.";
-                    // Redirect or show success message
-                    header("Location: patient_dashboard.php"); // Adjust as needed
-                    exit();
                 } else {
                     $error_message = "Failed to book appointment. Please try again.";
                 }
@@ -170,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="datetime-local" id="appointment_date" name="appointment_date" required>
             <div class="button-container">
                 <button type="submit">Book Appointment</button>
-                <button type="button" class="cancel-button" onclick="window.location.href='patient_dashboard.php'">Cancel</button>
+                <button type="button" class="cancel-button" onclick="window.location.href='patient_dashboard.php'">Back to Dashboard</button>
             </div>
         </form>
     </div>

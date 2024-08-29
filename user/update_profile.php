@@ -8,15 +8,19 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+$success_message = ""; // Initialize success message variable
+$error_message = "";   // Initialize error message variable
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
 
     $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ? WHERE id = ?");
-    $stmt->execute([$name, $email, $user_id]);
-
-    echo "Profile updated successfully!";
+    if ($stmt->execute([$name, $email, $user_id])) {
+        $success_message = "Profile updated successfully!";
+    } else {
+        $error_message = "Failed to update profile. Please try again.";
+    }
 }
 
 // Fetch current user details
@@ -96,6 +100,20 @@ $user = $stmt->fetch();
         .logout a:hover {
             background-color: #c82333;
         }
+        .message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            text-align: left;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -107,6 +125,11 @@ $user = $stmt->fetch();
 <div class="container">
     <div class="card">
         <h2>Update Your Profile</h2>
+        <?php if (!empty($success_message)): ?>
+            <div class="message success"><?php echo htmlspecialchars($success_message); ?></div>
+        <?php elseif (!empty($error_message)): ?>
+            <div class="message error"><?php echo htmlspecialchars($error_message); ?></div>
+        <?php endif; ?>
         <form method="post">
             <div class="form-group">
                 <label for="name">Name:</label>
@@ -123,7 +146,7 @@ $user = $stmt->fetch();
     </div>
 
     <div class="logout">
-        <a href="patient_dashboard.php">back to Dashboard</a>
+        <a href="patient_dashboard.php">Back to Dashboard</a>
     </div>
 </div>
 

@@ -93,7 +93,7 @@ $appointments = $stmt->fetchAll();
         }
         .status {
             display: inline-block;
-            padding: 4px 8px;
+            padding: 5px 10px;
             border-radius: 4px;
             color: #fff;
             text-align: center;

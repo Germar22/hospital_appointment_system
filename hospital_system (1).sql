@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 30, 2024 at 02:44 AM
+-- Generation Time: Aug 30, 2024 at 04:03 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.0.28
 
@@ -93,7 +93,7 @@ INSERT INTO `appointments` (`id`, `patient_id`, `doctor_id`, `appointment_date`,
 (110, 15, 13, '2024-09-15 15:00:00', 'Pending', '2024-08-29 10:15:31', '2024-08-29 10:15:31', NULL, NULL),
 (111, 15, 13, '2024-09-16 16:00:00', 'Pending', '2024-08-29 10:15:31', '2024-08-29 10:15:31', NULL, NULL),
 (112, 15, 13, '2024-09-17 17:00:00', 'Pending', '2024-08-29 10:15:31', '2024-08-29 10:15:31', NULL, NULL),
-(113, 15, 13, '2024-09-18 18:00:00', 'Pending', '2024-08-29 10:15:31', '2024-08-29 10:15:31', NULL, NULL),
+(113, 15, 13, '2024-09-18 18:00:00', 'Cancelled', '2024-08-29 10:15:31', '2024-08-30 01:45:00', NULL, NULL),
 (114, 15, 13, '2024-09-19 19:00:00', 'Cancelled', '2024-08-29 10:15:31', '2024-08-29 23:26:36', NULL, NULL);
 
 -- --------------------------------------------------------
@@ -164,7 +164,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `user_type`, `created_at`, `updated_at`) VALUES
-(23, 'admin', 'admin@gmail.com', '$2y$10$76BKDZcmD2xEMBXcLGaC/up1oi3OQ4mWF/fSxYsX9ErOo9ZsXrA7q', 'admin', '2024-08-28 15:44:24', '2024-08-28 15:44:24'),
+(23, 'admin', 'admin@gmail.com', '$2y$10$76BKDZcmD2xEMBXcLGaC/up1oi3OQ4mWF/fSxYsX9ErOo9ZsXrA7q', 'admin', '2024-08-28 15:44:24', '2024-08-30 00:57:34'),
 (24, 'pat', 'pat@gmail.com', '$2y$10$.AWNTXtzlu9aAmaL87S9qeRK8vgg.tbjeZxq1jZxRtbtL93y6lnue', 'patient', '2024-08-28 15:44:46', '2024-08-28 15:44:46'),
 (25, 'pat2', 'pat2@gmail.com', '$2y$10$lwp9JQABBaTG3zXtD3QVG.AvDlOptzP0vaO2KrSCSYyzZHgJwK52e', 'patient', '2024-08-28 15:45:00', '2024-08-28 15:45:00'),
 (26, 'doc', 'doc@gmail.com', '$2y$10$cCt5eo8h5Xx0xYl6UDmwReIAZ0rnIJSoGHdI5lDk773ljfB4LTepO', 'doctor', '2024-08-28 15:45:31', '2024-08-28 15:45:31'),

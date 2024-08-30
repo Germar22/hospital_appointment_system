@@ -117,12 +117,17 @@ if (isset($_POST['cancel_appointment_id'])) {
             font-weight: bold;
             text-align: center;
         }
-        td {
-            text-align: left; /* Default alignment for all cells */
+        th:nth-child(1), td:nth-child(1) {
+            text-align: left; /* Align Doctor Name column to the left */
         }
-        td.status {
-            text-align: center; /* Center the text in the status column */
-            vertical-align: middle; /* Vertically center the text */
+        th:nth-child(2), td:nth-child(2) {
+            text-align: center; /* Align Appointment Date column to the center */
+        }
+        th:nth-child(3), td:nth-child(3) {
+            text-align: center; /* Align Status column to the center */
+        }
+        th:nth-child(4), td:nth-child(4) {
+            text-align: center; /* Align Action column to the center */
         }
         .status {
             display: inline-block;
@@ -130,7 +135,7 @@ if (isset($_POST['cancel_appointment_id'])) {
             border-radius: 4px;
             color: #fff;
             text-align: center;
-            width: 86%; /* Make sure the status text spans the full width of the cell */
+            width: 86%; /* Ensure the status box is centered horizontally */
         }
         .status.Approved {
             background-color: #307f1b;
@@ -140,6 +145,9 @@ if (isset($_POST['cancel_appointment_id'])) {
         }
         .status.Cancelled {
             background-color: #dc3545;
+        }
+        .status.Completed {
+            background-color: #15a38e; /* Deep blue */
         }
         tr:nth-child(even) {
             background-color: #f2f2f2;
@@ -208,7 +216,7 @@ if (isset($_POST['cancel_appointment_id'])) {
                                 <td class="status <?php echo htmlspecialchars($appointment['status']); ?>">
                                     <?php echo htmlspecialchars($appointment['status']); ?>
                                 </td>
-                                <td>
+                                <td class="action">
                                     <?php if ($appointment['status'] === 'Pending'): ?>
                                         <form method="post" style="display:inline;">
                                             <input type="hidden" name="cancel_appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">

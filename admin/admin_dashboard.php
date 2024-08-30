@@ -106,6 +106,7 @@ $num_users = $stmt->fetchColumn();
         <h2>Manage Sections</h2>
         <a href="manage_users.php">Manage Users</a>
         <a href="manage_appointments.php">Manage Appointments</a>
+        <a href="update_profile.php">Update Profile</a> <!-- New Link -->
     </div>
 
     <div class="logout">

@@ -2,31 +2,29 @@
 session_start();
 include '../db.php'; // Adjust path if needed
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../index.php");
+// Check if user is logged in and is an admin
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'admin') {
+    header("Location: ../login.php");
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
-$message = ""; // Initialize message variable
+// Fetch current admin data
+$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$user = $stmt->fetch();
 
+// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
     
     // Update user data
     $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ? WHERE id = ?");
-    if ($stmt->execute([$name, $email, $user_id])) {
-        $message = 'Changes have been saved.';
-    } else {
-        $message = 'Failed to update profile. Please try again.';
-    }
+    $stmt->execute([$name, $email, $_SESSION['user_id']]);
+    
+    // Set success message
+    $message = 'Changes have been saved.';
 }
-
-// Fetch current user details
-$stmt = $pdo->prepare("SELECT name, email FROM users WHERE id = ?");
-$stmt->execute([$user_id]);
-$user = $stmt->fetch();
 ?>
 
 <!DOCTYPE html>
@@ -67,7 +65,7 @@ $user = $stmt->fetch();
             margin-bottom: 15px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: center; /* Center align input fields */
         }
         .form-group label {
             display: block;
@@ -77,12 +75,12 @@ $user = $stmt->fetch();
         }
         .form-group input[type="text"],
         .form-group input[type="email"] {
-            width: 100%;
-            max-width: 400px;
+            width: 100%; /* Full width within container */
+            max-width: 400px; /* Restrict maximum width */
             padding: 8px;
             border-radius: 4px;
             border: 1px solid #ccc;
-            box-sizing: border-box;
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
         }
         .button-group {
             text-align: center;
@@ -98,10 +96,12 @@ $user = $stmt->fetch();
             font-size: 16px;
             cursor: pointer;
         }
-        .save-button {
-            background-color: #007bff;
+        .button-group button {
             border: none;
             outline: none;
+        }
+        .save-button {
+            background-color: #007bff;
         }
         .save-button:hover {
             background-color: #0056b3;
@@ -129,7 +129,7 @@ $user = $stmt->fetch();
 </div>
 
 <div class="container">
-    <?php if (!empty($message)): ?>
+    <?php if (isset($message)): ?>
         <div class="notification"><?php echo htmlspecialchars($message); ?></div>
     <?php endif; ?>
 
@@ -146,7 +146,7 @@ $user = $stmt->fetch();
             </div>
             <div class="button-group">
                 <button type="submit" class="save-button">Save Changes</button>
-                <a href="patient_dashboard.php" class="cancel-button">Cancel</a>
+                <a href="admin_dashboard.php" class="cancel-button">Cancel</a>
             </div>
         </form>
     </div>
@@ -154,4 +154,3 @@ $user = $stmt->fetch();
 
 </body>
 </html>
-

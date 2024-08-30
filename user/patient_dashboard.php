@@ -1,75 +1,54 @@
 <?php
 session_start();
-include '../db.php'; // Ensure this path is correct
+include '../db.php'; // Adjust path if needed
 
 // Check if user is logged in and is a patient
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'patient') {
-    header("Location: ../index.php"); // Redirect to login page if not logged in or not a patient
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'patient') {
+    header("Location: ../index.php");
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+$patient_id = $_SESSION['user_id']; 
 
-// Fetch patient details (name and image)
-$stmt = $pdo->prepare("SELECT name, image FROM users WHERE id = ?");
-$stmt->execute([$user_id]);
-$user = $stmt->fetch();
-
-// Handle case where user details are not found
-if (!$user) {
-    echo "<p>Error: User details not found. Please contact support.</p>";
-    exit();
-}
-
-// Fetch patient_id from the patients table
-$stmt = $pdo->prepare("SELECT id FROM patients WHERE user_id = ?");
-$stmt->execute([$user_id]);
+// Fetch patient details for profile image
+$stmt = $pdo->prepare("SELECT image FROM users WHERE id = ?");
+$stmt->execute([$patient_id]);
 $patient = $stmt->fetch();
 
-if (!$patient) {
-    echo "<p>Error: Patient record not found. Please contact support.</p>";
-    exit();
-}
+// Set default image if the user has not uploaded one
+$profile_image = !empty($patient['image']) ? $patient['image'] : 'default.jpg';
 
-$patient_id = $patient['id'];
-
-// Fetch all appointments for the patient, ordered by most recent appointment_id
+// Fetch appointments for the logged-in patient
 $stmt = $pdo->prepare("
-    SELECT a.id AS appointment_id, u_doctor.name AS doctor_name, a.appointment_date, a.status
+    SELECT a.id AS appointment_id, d.name AS doctor_name, a.appointment_date, a.status
     FROM appointments a
     JOIN doctors d ON a.doctor_id = d.id
-    JOIN users u_doctor ON d.user_id = u_doctor.id
-    WHERE a.patient_id = ?
+    JOIN patients p ON a.patient_id = p.id
+    WHERE p.user_id = ? 
     ORDER BY a.id DESC
 ");
 $stmt->execute([$patient_id]);
 $appointments = $stmt->fetchAll();
 
-// Handle case where no appointments are found
-if ($appointments === false) {
-    echo "<p>Error: Failed to fetch appointments. Please try again later.</p>";
-    exit();
-}
-
-// Handle appointment cancellation through POST request
-if (isset($_POST['cancel_appointment_id'])) {
-    $appointment_id = $_POST['cancel_appointment_id'];
-    
-    // Update the status to 'Cancelled'
-    $stmt = $pdo->prepare("UPDATE appointments SET status = 'Cancelled' WHERE id = ? AND patient_id = ?");
-    $stmt->execute([$appointment_id, $patient_id]);
-    
-    header("Location: patient_dashboard.php"); // Refresh the page to show the updated status
+// Handle appointment cancellation through AJAX request
+if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
+    $appointment_id = $_POST['appointment_id'];
+    $stmt = $pdo->prepare("UPDATE appointments SET status = 'Cancelled' WHERE id = ?");
+    if ($stmt->execute([$appointment_id])) {
+        echo "Success";
+    } else {
+        echo "Failed";
+    }
     exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Dashboard</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -77,128 +56,125 @@ if (isset($_POST['cancel_appointment_id'])) {
             margin: 0;
             padding: 0;
         }
+        .navbar {
+            background-color: #007bff;
+            padding: 10px;
+            color: white;
+            text-align: center;
+        }
         .container {
-            max-width: 900px;
-            margin: 20px auto;
             padding: 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            overflow: hidden; /* Ensure content doesn't overflow */
-        }
-        h2 {
-            color: #333;
-            text-align: center;
-        }
-        h3 {
-            color: #555;
-            text-align: center;
-        }
-        .profile {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px; /* Space below the profile section */
-        }
-        .profile img {
-            border-radius: 50%;
-            width: 100px; /* Adjust the width to fit the design */
-            height: 100px; /* Adjust the height to maintain aspect ratio */
-            object-fit: cover; /* Ensure the image covers the area without distortion */
-            margin-right: 15px; /* Space between the image and name */
-        }
-        .profile-info {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
-            justify-content: center;
         }
-        .profile-info h3 {
+        .profile-card {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .profile-card img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            margin-right: 20px;
+        }
+        .profile-card h1 {
             margin: 0;
-            font-size: 22px; /* Adjust the font size */
-            color: #333;
+        }
+        .profile-card p {
+            margin: 5px 0;
+        }
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            margin-top: 0;
+        }
+        .logout {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .logout a {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .logout a:hover {
+            background-color: #c82333;
+        }
+        .dashboard-links a {
+            display: block;
+            padding: 10px;
+            margin: 5px 0;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .dashboard-links a:hover {
+            background-color: #0056b3;
         }
         .table-wrapper {
-            max-height: 400px; /* Set the maximum height for the table */
-            overflow-y: auto; /* Enable vertical scrollbar if needed */
-            margin-bottom: 20px; /* Space below the table */
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 0; /* Remove extra margins */
-        }
-        table, th, td {
             border: 1px solid #ddd;
         }
         th, td {
             padding: 12px;
-            vertical-align: middle; /* Align text vertically in the middle */
+            text-align: center; /* Center align all cells horizontally */
+            border: 1px solid #ddd;
         }
         th {
             background-color: #007bff;
-            color: #fff;
+            color: white;
             font-weight: bold;
-            text-align: center;
         }
-        th:nth-child(1), td:nth-child(1) {
-            text-align: left; /* Align Doctor Name column to the left */
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
-        th:nth-child(2), td:nth-child(2) {
-            text-align: center; /* Align Appointment Date column to the center */
-        }
-        th:nth-child(3), td:nth-child(3) {
-            text-align: center; /* Align Status column to the center */
-        }
-        th:nth-child(4), td:nth-child(4) {
-            text-align: center; /* Align Action column to the center */
+        tr:hover {
+            background-color: #f1f1f1;
         }
         .status {
-            display: inline-block;
-            padding: 5px 10px;
+            display: flex;
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+            padding: 5px;
             border-radius: 4px;
-            color: #fff;
-            text-align: center;
-            width: 86%; /* Ensure the status box is centered horizontally */
-        }
-        .status.Approved {
-            background-color: #307f1b;
+            color: white;
+            min-width: 80px;
         }
         .status.Pending {
             background-color: #ffc107;
         }
-        .status.Cancelled {
-            background-color: #dc3545;
+        .status.Approved {
+            background-color: #307f1b;
         }
         .status.Completed {
-            background-color: #15a38e; /* Deep blue */
+            background-color: #15a38e;
         }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        tr:hover {
-            background-color: #e9ecef;
-        }
-        .nav-links {
-            margin-top: 20px;
-            text-align: center;
-        }
-        .nav-links a {
-            display: inline-block;
-            margin: 0 10px;
-            padding: 10px 15px;
-            color: #007bff;
-            text-decoration: none;
-            border: 1px solid #007bff;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        .nav-links a:hover {
-            background-color: #007bff;
-            color: #fff;
-        }
-        .no-appointments {
-            text-align: center;
-            color: #999;
-            margin-top: 20px;
+        .status.Cancelled {
+            background-color: #dc3545;
         }
         .action-button {
             background-color: #dc3545;
@@ -213,61 +189,97 @@ if (isset($_POST['cancel_appointment_id'])) {
         .action-button:hover {
             background-color: #c82333;
         }
+        .hidden {
+            visibility: hidden;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Profile Section -->
-        <div class="profile">
-            <img src="../uploads/<?php echo htmlspecialchars($user['image']); ?>" alt="Profile Image" onerror="this.onerror=null; this.src='../uploads/default-profile.png';">
-            <div class="profile-info">
-                <h3><?php echo htmlspecialchars($user['name']); ?></h3>
-            </div>
-        </div>
 
-        <h2>Welcome, <?php echo htmlspecialchars($user['name']); ?></h2>
-        <h3>Your Recent Appointments</h3>
-        <?php if (!empty($appointments)): ?>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Doctor Name</th>
-                            <th>Appointment Date</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+<div class="navbar">
+    <h1>Patient Dashboard</h1>
+</div>
+
+<div class="container">
+    <div class="profile-card">
+        <img src="../uploads/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image">
+
+        <div>
+            <h1>Welcome, Patient</h1>
+        </div>
+    </div>
+
+    <div class="dashboard-links">
+        <a href="book_appointment.php">Book Appointment</a>
+        <a href="update_profile.php">Update Profile</a>
+        <a href="../logout.php">Logout</a>
+    </div>
+
+    <div class="card">
+        <h2>Your Appointments</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Appointment ID</th>
+                        <th>Doctor Name</th>
+                        <th>Appointment Date</th>
+                        <th>Status</th>
+                        <th class="action-column">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!empty($appointments)): ?>
                         <?php foreach ($appointments as $appointment): ?>
                             <tr>
+                                <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
                                 <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
                                 <td><?php echo htmlspecialchars(date('F j, Y, g:i a', strtotime($appointment['appointment_date']))); ?></td>
-                                <td class="status <?php echo htmlspecialchars($appointment['status']); ?>">
-                                    <?php echo htmlspecialchars($appointment['status']); ?>
-                                </td>
-                                <td class="action">
+                                <td><span class="status <?php echo htmlspecialchars($appointment['status']); ?>"><?php echo htmlspecialchars($appointment['status']); ?></span></td>
+                                <td class="action-column">
                                     <?php if ($appointment['status'] === 'Pending'): ?>
-                                        <form method="post" style="display:inline;">
-                                            <input type="hidden" name="cancel_appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">
-                                            <button type="submit" class="action-button">Cancel</button>
-                                        </form>
+                                        <button class="action-button cancel-btn" data-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">Cancel</button>
                                     <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php else: ?>
-            <p class="no-appointments">You have no appointments at this time.</p>
-        <?php endif; ?>
-
-        <div class="nav-links">
-            <a href="book_appointment.php">Book New Appointment</a>
-            <a href="update_profile.php">Update Profile</a>
-            <a href="../logout.php">Logout</a>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5" style="text-align: center;">No appointments found.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('.cancel-btn').click(function() {
+            var button = $(this);
+            var appointmentId = button.data('id');
+
+            $.ajax({
+                type: 'POST',
+                url: 'patient_dashboard.php',
+                data: { ajax_action: true, action: 'cancel', appointment_id: appointmentId },
+                success: function(response) {
+                    if (response === "Success") {
+                        button.closest('tr').find('.status')
+                            .removeClass('Pending')
+                            .addClass('Cancelled')
+                            .text('Cancelled');
+                        button.addClass('hidden'); // Hide the button while preserving space
+                    } else {
+                        alert('Cancellation failed. Please try again.');
+                    }
+                }
+            });
+        });
+    });
+</script>
+
 </body>
 </html>

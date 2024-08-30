@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../db.php';
+include '../db.php'; // Adjust path if needed
 
 // Check if user is logged in and is a doctor
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'doctor') {
@@ -14,6 +14,9 @@ $doctor_id = $_SESSION['user_id'];
 $stmt = $pdo->prepare("SELECT image FROM users WHERE id = ?");
 $stmt->execute([$doctor_id]);
 $doctor = $stmt->fetch();
+
+// Set default image if the user has not uploaded one
+$profile_image = !empty($doctor['image']) ? $doctor['image'] : 'default.jpg';
 
 // Fetch appointments for the logged-in doctor
 $stmt = $pdo->prepare("
@@ -46,13 +49,12 @@ if (isset($_POST['ajax_action'])) {
     exit();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doctor Dashboard - Appointments</title>
+    <title>Doctor Dashboard</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
@@ -61,66 +63,105 @@ if (isset($_POST['ajax_action'])) {
             margin: 0;
             padding: 0;
         }
-
+        .navbar {
+            background-color: #007bff;
+            padding: 10px;
+            color: white;
+            text-align: center;
+        }
         .container {
-            max-width: 900px;
-            margin: 50px auto;
             padding: 20px;
-            background-color: #fff;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-card {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            position: relative; /* Add relative positioning */
+            margin-bottom: 20px;
         }
-
-        .profile-image {
-            display: block;
+        .profile-card img {
+            border-radius: 50%;
             width: 100px;
             height: 100px;
             object-fit: cover;
-            border-radius: 50%;
-            position: absolute; /* Absolute positioning */
-            top: 20px;
-            left: 20px;
+            margin-right: 20px;
         }
-
-        h2 {
-            text-align: center;
-            color: #333;
+        .profile-card h1 {
+            margin: 0;
+        }
+        .profile-card p {
+            margin: 5px 0;
+        }
+        .card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
-
+        .card h2 {
+            margin-top: 0;
+        }
+        .logout {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .logout a {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        .logout a:hover {
+            background-color: #c82333;
+        }
+        .dashboard-links a {
+            display: block;
+            padding: 10px;
+            margin: 5px 0;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .dashboard-links a:hover {
+            background-color: #0056b3;
+        }
         .table-wrapper {
-            margin-top: 120px; /* Adjust margin to ensure table is not overlapped by profile image */
+            margin-top: 20px;
             max-height: 400px;
             overflow-y: auto;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             border: 1px solid #ddd;
         }
-
         th, td {
             padding: 12px;
             text-align: left;
             border: 1px solid #ddd;
         }
-
         th {
             background-color: #007bff;
             color: white;
             font-weight: bold;
         }
-
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-
         tr:hover {
             background-color: #f1f1f1;
         }
-
         .status {
             padding: 5px;
             border-radius: 4px;
@@ -129,39 +170,18 @@ if (isset($_POST['ajax_action'])) {
             display: inline-block;
             min-width: 80px;
         }
-
         .status.Pending {
             background-color: #ffc107;
         }
-
         .status.Approved {
             background-color: #307f1b;
         }
-
+        .status.Completed {
+            background-color: #15a38e;
+        }
         .status.Cancelled {
             background-color: #dc3545;
         }
-
-        .nav-links {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .nav-links a {
-            display: inline-block;
-            margin: 5px;
-            padding: 10px;
-            background-color: #007bff;
-            color: #fff;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        .nav-links a:hover {
-            background-color: #fb0018;
-        }
-
         .action-button {
             background-color: #15a38e;
             color: white;
@@ -172,39 +192,33 @@ if (isset($_POST['ajax_action'])) {
             font-size: 14px;
             text-align: center;
         }
-
         .action-button:hover {
             background-color: #218838;
         }
-
-        form {
-            margin: 0;
-        }
-
-        .action-column {
-            width: 120px;
-            text-align: center;
-        }
-
         .action-button.complete-btn {
             background-color: #15a38e;
         }
-
         .action-button.complete-btn:hover {
             background-color: #138496;
-        }
-
-        .status.Completed {
-            background-color: #15a38e;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <?php if (!empty($doctor['image'])): ?>
-            <img src="../uploads/<?php echo htmlspecialchars($doctor['image']); ?>" alt="Profile Image" class="profile-image">
-        <?php endif; ?>
 
+<div class="navbar">
+    <h1>Doctor Dashboard</h1>
+</div>
+
+<div class="container">
+    <div class="profile-card">
+    <img src="../uploads/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image">
+
+        <div>
+            <h1>Welcome, Doctor</h1>
+        </div>
+    </div>
+
+    <div class="card">
         <h2>Your Upcoming Appointments</h2>
 
         <div class="table-wrapper">
@@ -243,39 +257,41 @@ if (isset($_POST['ajax_action'])) {
                 </tbody>
             </table>
         </div>
-
-        <div class="nav-links">
-            <a href="update_profile.php">Update Profile</a>
-            <a href="../logout.php">Logout</a>
-        </div>
     </div>
 
-    <script>
-        $(document).ready(function() {
-            $('.approve-btn, .complete-btn').click(function() {
-                var button = $(this);
-                var appointmentId = button.data('id');
-                var action = button.hasClass('approve-btn') ? 'approve' : 'complete';
+    <div class="dashboard-links">
+        <a href="update_profile.php">Update Profile</a>
+        <a href="../logout.php">Logout</a>
+    </div>
+</div>
 
-                $.ajax({
-                    type: 'POST',
-                    url: 'doctor_dashboard.php',
-                    data: { ajax_action: true, appointment_id: appointmentId, action: action },
-                    success: function(response) {
-                        if (response === "Success") {
-                            if (action === 'approve') {
-                                button.closest('tr').find('.status').removeClass('Pending').addClass('Approved').text('Approved');
-                            } else if (action === 'complete') {
-                                button.closest('tr').find('.status').removeClass('Approved').addClass('Completed').text('Completed');
-                            }
-                            button.remove(); // Remove the button after the action
-                        } else {
-                            alert('Failed to process the request. Please try again.');
+<script>
+    $(document).ready(function() {
+        $('.approve-btn, .complete-btn').click(function() {
+            var button = $(this);
+            var appointmentId = button.data('id');
+            var action = button.hasClass('approve-btn') ? 'approve' : 'complete';
+
+            $.ajax({
+                type: 'POST',
+                url: 'doctor_dashboard.php',
+                data: { ajax_action: true, appointment_id: appointmentId, action: action },
+                success: function(response) {
+                    if (response === "Success") {
+                        if (action === 'approve') {
+                            button.closest('tr').find('.status').removeClass('Pending').addClass('Approved').text('Approved');
+                        } else if (action === 'complete') {
+                            button.closest('tr').find('.status').removeClass('Approved').addClass('Completed').text('Completed');
                         }
+                        button.remove(); // Remove the button after action
+                    } else {
+                        alert('Action failed. Please try again.');
                     }
-                });
+                }
             });
         });
-    </script>
+    });
+</script>
+
 </body>
 </html>

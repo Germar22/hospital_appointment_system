@@ -40,6 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $stmt = $pdo->prepare("SELECT name, email, image FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
+
+// Determine the profile image path
+$profile_image = !empty($user['image']) ? $user['image'] : 'default.jpg';
 ?>
 
 <!DOCTYPE html>
@@ -166,9 +169,7 @@ $user = $stmt->fetch();
             <div class="form-group">
                 <label for="image">Profile Image:</label>
                 <input type="file" id="image" name="image" accept="image/*">
-                <?php if ($user['image']): ?>
-                    <img src="../uploads/<?php echo htmlspecialchars($user['image']); ?>" alt="Profile Image" class="profile-image">
-                <?php endif; ?>
+                <img src="../uploads/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image" class="profile-image">
             </div>
             <div class="button-group">
                 <button type="submit" class="save-button">Save Changes</button>

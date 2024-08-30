@@ -28,6 +28,11 @@ $stmt = $pdo->prepare("SELECT image FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $admin = $stmt->fetch();
 $profile_image = $admin['image'];
+
+// Set the default image if no image is uploaded
+if (empty($profile_image)) {
+    $profile_image = 'default.jpg';
+}
 ?>
 
 <!DOCTYPE html>
@@ -126,11 +131,7 @@ $profile_image = $admin['image'];
 
 <div class="container">
     <div class="profile-card">
-        <?php if ($profile_image): ?>
-            <img src="../uploads/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image">
-        <?php else: ?>
-            <img src="../uploads/default.png" alt="Profile Image"> <!-- Default image if no profile image -->
-        <?php endif; ?>
+        <img src="../uploads/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image">
         <div>
             <h1>Welcome, Admin</h1>
             <p>Number of Doctors: <?php echo $num_doctors; ?></p>

@@ -1,16 +1,16 @@
 <?php
 session_start();
-include '../db.php'; // Ensure this path is correct
+include '../db.php';
 
 // Check if user is logged in and is a doctor
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'doctor') {
-    header("Location: ../index.php"); // Redirect to login page if not logged in or not a doctor
+    header("Location: ../index.php");
     exit();
 }
 
-$doctor_id = $_SESSION['user_id']; // Assuming doctor_id is stored in session after login
+$doctor_id = $_SESSION['user_id']; 
 
-// Fetch appointments for the logged-in doctor, ordered by most recent appointment_id
+// Fetch appointments for the logged-in doctor
 $stmt = $pdo->prepare("
     SELECT a.id AS appointment_id, p.name AS patient_name, a.appointment_date, a.status
     FROM appointments a
@@ -22,14 +22,22 @@ $stmt = $pdo->prepare("
 $stmt->execute([$doctor_id]);
 $appointments = $stmt->fetchAll();
 
-// Handle appointment approval through AJAX request
-if (isset($_POST['ajax_approve'])) {
+// Handle appointment approval and completion through AJAX request
+if (isset($_POST['ajax_action'])) {
     $appointment_id = $_POST['appointment_id'];
+    $action = $_POST['action'];
 
-    $stmt = $pdo->prepare("UPDATE appointments SET status = 'Approved' WHERE id = ?");
-    $stmt->execute([$appointment_id]);
+    if ($action == 'approve') {
+        $stmt = $pdo->prepare("UPDATE appointments SET status = 'Approved' WHERE id = ?");
+    } elseif ($action == 'complete') {
+        $stmt = $pdo->prepare("UPDATE appointments SET status = 'Completed' WHERE id = ?");
+    }
 
-    echo "Success"; // Respond with success message
+    if ($stmt->execute([$appointment_id])) {
+        echo "Success";
+    } else {
+        echo "Failed";
+    }
     exit();
 }
 ?>
@@ -56,40 +64,44 @@ if (isset($_POST['ajax_approve'])) {
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            overflow-x: auto; /* Ensure horizontal scrolling if needed */
         }
 
         h2 {
             text-align: center;
             color: #333;
+            margin-bottom: 20px;
         }
 
         .table-wrapper {
             max-height: 400px; /* Adjust as needed */
             overflow-y: auto;
-            border: 1px solid #ddd; /* Optional: adds a border around the table */
-            border-radius: 4px; /* Optional: rounds the corners */
+            margin-bottom: 20px; /* Space below the table */
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 0; /* Remove default margin */
+            border: 1px solid #ddd; /* Add border around table */
         }
 
         th, td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border: 1px solid #ddd; /* Add border around each cell */
         }
 
         th {
             background-color: #007bff;
             color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
 
         tr:hover {
-            background-color: #f5f5f5;
+            background-color: #f1f1f1;
         }
 
         .status {
@@ -98,7 +110,7 @@ if (isset($_POST['ajax_approve'])) {
             color: white;
             text-align: center;
             display: inline-block;
-            min-width: 100px; /* Set a minimum width to ensure uniform size */
+            min-width: 80px;
         }
 
         .status.Pending {
@@ -106,7 +118,7 @@ if (isset($_POST['ajax_approve'])) {
         }
 
         .status.Approved {
-            background-color: #307f1b;
+            background-color: #28a745;
         }
 
         .status.Cancelled {
@@ -122,7 +134,7 @@ if (isset($_POST['ajax_approve'])) {
             display: inline-block;
             margin: 5px;
             padding: 10px;
-            background-color: #007bff;
+            background-color: #ff2f43;
             color: #fff;
             text-decoration: none;
             border-radius: 4px;
@@ -130,23 +142,22 @@ if (isset($_POST['ajax_approve'])) {
         }
 
         .nav-links a:hover {
-            background-color: #0056b3;
+            background-color: #fb0018;
         }
 
         .action-button {
-            background-color: #1b8718;
+            background-color: #28a745;
             color: white;
             border: none;
             padding: 5px 12px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
-            min-width: 100px; /* Ensure buttons are of uniform size */
             text-align: center;
         }
 
         .action-button:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
 
         form {
@@ -156,6 +167,15 @@ if (isset($_POST['ajax_approve'])) {
         .action-column {
             width: 120px; /* Set a fixed width for the action column */
             text-align: center;
+        }
+        .action-button.complete-btn {
+            background-color: #15a38e;
+        }
+        .action-button.complete-btn:hover {
+            background-color: #138496;
+        }
+        .status.Completed {
+            background-color: #15a38e;
         }
     </style>
 </head>
@@ -170,7 +190,7 @@ if (isset($_POST['ajax_approve'])) {
                         <th>Patient Name</th>
                         <th>Appointment Date</th>
                         <th>Status</th>
-                        <th class="action-column">Action</th> <!-- Apply fixed width here -->
+                        <th class="action-column">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -184,13 +204,15 @@ if (isset($_POST['ajax_approve'])) {
                                 <td class="action-column">
                                     <?php if ($appointment['status'] === 'Pending'): ?>
                                         <button class="action-button approve-btn" data-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">Approve</button>
+                                    <?php elseif ($appointment['status'] === 'Approved'): ?>
+                                        <button class="action-button complete-btn" data-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">Complete</button>
                                     <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="5">No appointments found.</td>
+                            <td colspan="5" style="text-align: center;">No appointments found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
@@ -204,20 +226,25 @@ if (isset($_POST['ajax_approve'])) {
 
     <script>
         $(document).ready(function() {
-            $('.approve-btn').click(function() {
+            $('.approve-btn, .complete-btn').click(function() {
                 var button = $(this);
                 var appointmentId = button.data('id');
+                var action = button.hasClass('approve-btn') ? 'approve' : 'complete';
 
                 $.ajax({
                     type: 'POST',
                     url: 'doctor_dashboard.php',
-                    data: { ajax_approve: true, appointment_id: appointmentId },
+                    data: { ajax_action: true, appointment_id: appointmentId, action: action },
                     success: function(response) {
                         if (response === "Success") {
-                            button.closest('tr').find('.status').removeClass('Pending').addClass('Approved').text('Approved');
-                            button.remove(); // Remove the button after approval
+                            if (action === 'approve') {
+                                button.closest('tr').find('.status').removeClass('Pending').addClass('Approved').text('Approved');
+                            } else if (action === 'complete') {
+                                button.closest('tr').find('.status').removeClass('Approved').addClass('Completed').text('Completed');
+                            }
+                            button.remove(); // Remove the button after the action
                         } else {
-                            alert('Failed to approve the appointment. Please try again.');
+                            alert('Failed to process the request. Please try again.');
                         }
                     }
                 });

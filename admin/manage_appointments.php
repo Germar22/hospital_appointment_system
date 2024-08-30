@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     exit();
 }
 
-// Fetch appointments data
+// Fetch appointments data ordered by appointment_id in descending order
 $stmt = $pdo->query("
     SELECT a.id AS appointment_id, u_patient.name AS patient_name, u_doctor.name AS doctor_name, a.appointment_date, a.status
     FROM appointments a
@@ -16,7 +16,7 @@ $stmt = $pdo->query("
     JOIN users u_patient ON p.user_id = u_patient.id
     JOIN doctors d ON a.doctor_id = d.id
     JOIN users u_doctor ON d.user_id = u_doctor.id
-    ORDER BY a.appointment_date DESC
+    ORDER BY a.id DESC
 ");
 $appointments = $stmt->fetchAll();
 ?>
@@ -66,8 +66,10 @@ $appointments = $stmt->fetchAll();
             background-color: #0056b3;
         }
         .table-wrapper {
-            max-height: 500px; /* Set max height for table */
-            overflow-y: auto; /* Enable vertical scrollbar if needed */
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 500px; /* Limit the height */
         }
         table {
             width: 100%;
@@ -81,6 +83,9 @@ $appointments = $stmt->fetchAll();
             padding: 12px;
             text-align: left;
         }
+        th, td.status {
+            text-align: center; /* Center the status text */
+        }
         th {
             background-color: #007bff;
             color: #fff;
@@ -92,20 +97,23 @@ $appointments = $stmt->fetchAll();
             background-color: #e9ecef;
         }
         .status {
-            display: inline-block;
             padding: 5px 10px;
             border-radius: 4px;
             color: #fff;
             text-align: center;
+            font-weight: bold;
         }
         .status.Approved {
-            background-color: #28a745;
+            background-color: #28a745; /* Bright green */
         }
         .status.Pending {
-            background-color: #ffc107;
+            background-color: #ffc107; /* Bright orange */
         }
         .status.Cancelled {
-            background-color: #dc3545;
+            background-color: #e74c3c; /* Bright red */
+        }
+        .status.Completed {
+            background-color: #15a38e; /* Deep blue */
         }
         .no-appointments {
             text-align: center;

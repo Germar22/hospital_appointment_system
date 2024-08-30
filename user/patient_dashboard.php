@@ -21,7 +21,7 @@ if (!$user) {
     exit();
 }
 
-// Fetch patient_id from the users table
+// Fetch patient_id from the patients table
 $stmt = $pdo->prepare("SELECT id FROM patients WHERE user_id = ?");
 $stmt->execute([$user_id]);
 $patient = $stmt->fetch();
@@ -48,6 +48,18 @@ $appointments = $stmt->fetchAll();
 // Handle case where no appointments are found
 if ($appointments === false) {
     echo "<p>Error: Failed to fetch appointments. Please try again later.</p>";
+    exit();
+}
+
+// Handle appointment cancellation through POST request
+if (isset($_POST['cancel_appointment_id'])) {
+    $appointment_id = $_POST['cancel_appointment_id'];
+    
+    // Update the status to 'Cancelled'
+    $stmt = $pdo->prepare("UPDATE appointments SET status = 'Cancelled' WHERE id = ? AND patient_id = ?");
+    $stmt->execute([$appointment_id, $patient_id]);
+    
+    header("Location: patient_dashboard.php"); // Refresh the page to show the updated status
     exit();
 }
 ?>
@@ -158,6 +170,19 @@ if ($appointments === false) {
             color: #999;
             margin-top: 20px;
         }
+        .action-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: center;
+        }
+        .action-button:hover {
+            background-color: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -172,6 +197,7 @@ if ($appointments === false) {
                             <th>Doctor Name</th>
                             <th>Appointment Date</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -181,6 +207,14 @@ if ($appointments === false) {
                                 <td><?php echo htmlspecialchars(date('F j, Y, g:i a', strtotime($appointment['appointment_date']))); ?></td>
                                 <td class="status <?php echo htmlspecialchars($appointment['status']); ?>">
                                     <?php echo htmlspecialchars($appointment['status']); ?>
+                                </td>
+                                <td>
+                                    <?php if ($appointment['status'] === 'Pending'): ?>
+                                        <form method="post" style="display:inline;">
+                                            <input type="hidden" name="cancel_appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">
+                                            <button type="submit" class="action-button">Cancel</button>
+                                        </form>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

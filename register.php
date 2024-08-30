@@ -14,9 +14,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $end_time = isset($_POST['end_time']) ? $_POST['end_time'] : '';
     $availability_schedule = $start_time && $end_time ? "$start_time to $end_time" : '';
 
+    // Handle image upload
+    $image = null;
+    if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+        $image_name = time() . '_' . $_FILES['image']['name']; // Unique filename
+        $target_dir = 'uploads/'; // Directory to store images
+        $target_file = $target_dir . $image_name;
+
+        // Move the uploaded file to the target directory
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+            $image = $image_name;
+        }
+    }
+
     // Insert user data
-    $stmt = $pdo->prepare("INSERT INTO users (name, email, password, user_type) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$name, $email, $password, $user_type]);
+    $stmt = $pdo->prepare("INSERT INTO users (name, email, password, user_type, image) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$name, $email, $password, $user_type, $image]);
 
     $user_id = $pdo->lastInsertId();
 
@@ -72,7 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         input[type="email"],
         input[type="password"],
         textarea,
-        select {
+        select,
+        input[type="file"] {
             width: 100%;
             padding: 10px;
             margin-bottom: 15px;
@@ -112,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <div class="container">
     <h2>Register</h2>
-    <form method="post" action="">
+    <form method="post" action="" enctype="multipart/form-data">
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" required>
 
@@ -140,6 +154,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <p>Provide the available start and end times.</p>
         </div>
 
+        <label for="image">Profile Image:</label>
+        <input type="file" id="image" name="image" accept="image/*">
+
         <input type="submit" value="Register">
     </form>
 
@@ -147,7 +164,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <p>Already have an account? <a href="index.php">Login here</a></p>
     </div>
 </div>
-
 
 <script>
     document.getElementById('user_type').addEventListener('change', function() {

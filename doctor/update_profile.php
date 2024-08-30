@@ -8,21 +8,38 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
+$message = ""; // Initialize message variable
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
 
-    $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ? WHERE id = ?");
-    $stmt->execute([$name, $email, $user_id]);
+    // Handle image upload
+    $image = null;
+    if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+        $image_name = time() . '_' . $_FILES['image']['name']; // Unique filename
+        $target_dir = '../uploads/'; // Directory to store images
+        $target_file = $target_dir . $image_name;
 
-    echo "Profile updated successfully!";
+        // Move the uploaded file to the target directory
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+            $image = $image_name;
+        }
+    }
+
+    // Update user data
+    $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, image = COALESCE(?, image) WHERE id = ?");
+    if ($stmt->execute([$name, $email, $image, $user_id])) {
+        $message = 'Changes have been saved.';
+    } else {
+        $message = 'Failed to update profile. Please try again.';
+    }
 }
 
-// Fetch current doctor details
-$stmt = $pdo->prepare("SELECT name, email FROM users WHERE id = ?");
+// Fetch current user details
+$stmt = $pdo->prepare("SELECT name, email, image FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
-$doctor = $stmt->fetch();
+$user = $stmt->fetch();
 ?>
 
 <!DOCTYPE html>
@@ -46,7 +63,7 @@ $doctor = $stmt->fetch();
         }
         .container {
             padding: 20px;
-            max-width: 1200px;
+            max-width: 600px;
             margin: 0 auto;
         }
         .card {
@@ -61,40 +78,66 @@ $doctor = $stmt->fetch();
         }
         .form-group {
             margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .form-group label {
             display: block;
             margin-bottom: 5px;
+            font-weight: bold;
+            text-align: center;
         }
-        .form-group input {
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="file"] {
             width: 100%;
+            max-width: 400px;
             padding: 8px;
             border-radius: 4px;
-            border: 1px solid #ddd;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
         }
-        .form-group input[type="submit"] {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .form-group input[type="submit"]:hover {
-            background-color: #0056b3;
-        }
-        .logout {
-            display: block;
+        .button-group {
             text-align: center;
             margin-top: 20px;
         }
-        .logout a {
-            background-color: #dc3545;
-            color: white;
+        .button-group button,
+        .button-group a {
             padding: 10px 20px;
+            margin: 5px;
             border-radius: 4px;
             text-decoration: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
         }
-        .logout a:hover {
+        .save-button {
+            background-color: #007bff;
+            border: none;
+            outline: none;
+        }
+        .save-button:hover {
+            background-color: #0056b3;
+        }
+        .cancel-button {
+            background-color: #dc3545;
+        }
+        .cancel-button:hover {
             background-color: #c82333;
+        }
+        .notification {
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .profile-image {
+            display: block;
+            max-width: 150px;
+            margin: 10px auto;
         }
     </style>
 </head>
@@ -105,25 +148,33 @@ $doctor = $stmt->fetch();
 </div>
 
 <div class="container">
+    <?php if (!empty($message)): ?>
+        <div class="notification"><?php echo htmlspecialchars($message); ?></div>
+    <?php endif; ?>
+
     <div class="card">
-        <h2>Update Your Profile</h2>
-        <form method="post">
+        <h2>Update Profile</h2>
+        <form action="" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="name">Name:</label>
-                <input type="text" name="name" id="name" value="<?php echo htmlspecialchars($doctor['name']); ?>" required>
+                <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($user['name']); ?>" required>
             </div>
             <div class="form-group">
                 <label for="email">Email:</label>
-                <input type="email" name="email" id="email" value="<?php echo htmlspecialchars($doctor['email']); ?>" required>
+                <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
             </div>
             <div class="form-group">
-                <input type="submit" value="Update Profile">
+                <label for="image">Profile Image:</label>
+                <input type="file" id="image" name="image" accept="image/*">
+                <?php if ($user['image']): ?>
+                    <img src="../uploads/<?php echo htmlspecialchars($user['image']); ?>" alt="Profile Image" class="profile-image">
+                <?php endif; ?>
+            </div>
+            <div class="button-group">
+                <button type="submit" class="save-button">Save Changes</button>
+                <a href="doctor_dashboard.php" class="cancel-button">Back to Dashboard</a>
             </div>
         </form>
-    </div>
-
-    <div class="logout">
-        <a href="doctor_dashboard.php">Go Back</a>
     </div>
 </div>
 

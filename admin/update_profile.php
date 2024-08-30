@@ -4,27 +4,43 @@ include '../db.php'; // Adjust path if needed
 
 // Check if user is logged in and is an admin
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'admin') {
-    header("Location: ../login.php");
+    header("Location: ../index.php");
     exit();
 }
 
-// Fetch current admin data
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch();
+$user_id = $_SESSION['user_id'];
+$message = ""; // Initialize message variable
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
     
-    // Update user data
-    $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ? WHERE id = ?");
-    $stmt->execute([$name, $email, $_SESSION['user_id']]);
+    // Handle image upload
+    $image = null;
+    if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
+        $image_name = time() . '_' . $_FILES['image']['name']; // Unique filename
+        $target_dir = '../uploads/'; // Directory to store images
+        $target_file = $target_dir . $image_name;
+
+        // Move the uploaded file to the target directory
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $target_file)) {
+            $image = $image_name;
+        }
+    }
     
-    // Set success message
-    $message = 'Changes have been saved.';
+    // Update user data
+    $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, image = COALESCE(?, image) WHERE id = ?");
+    if ($stmt->execute([$name, $email, $image, $user_id])) {
+        $message = 'Changes have been saved.';
+    } else {
+        $message = 'Failed to update profile. Please try again.';
+    }
 }
+
+// Fetch current user details
+$stmt = $pdo->prepare("SELECT name, email, image FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch();
 ?>
 
 <!DOCTYPE html>
@@ -65,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 15px;
             display: flex;
             flex-direction: column;
-            align-items: center; /* Center align input fields */
+            align-items: center;
         }
         .form-group label {
             display: block;
@@ -74,13 +90,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: center;
         }
         .form-group input[type="text"],
-        .form-group input[type="email"] {
-            width: 100%; /* Full width within container */
-            max-width: 400px; /* Restrict maximum width */
+        .form-group input[type="email"],
+        .form-group input[type="file"] {
+            width: 100%;
+            max-width: 400px;
             padding: 8px;
             border-radius: 4px;
             border: 1px solid #ccc;
-            box-sizing: border-box; /* Include padding and border in element's total width and height */
+            box-sizing: border-box;
         }
         .button-group {
             text-align: center;
@@ -96,12 +113,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 16px;
             cursor: pointer;
         }
-        .button-group button {
-            border: none;
-            outline: none;
-        }
         .save-button {
             background-color: #007bff;
+            border: none;
+            outline: none;
         }
         .save-button:hover {
             background-color: #0056b3;
@@ -120,6 +135,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: center;
             margin-bottom: 20px;
         }
+        .profile-image {
+            display: block;
+            max-width: 150px;
+            margin: 10px auto;
+        }
     </style>
 </head>
 <body>
@@ -129,13 +149,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <div class="container">
-    <?php if (isset($message)): ?>
+    <?php if (!empty($message)): ?>
         <div class="notification"><?php echo htmlspecialchars($message); ?></div>
     <?php endif; ?>
 
     <div class="card">
         <h2>Update Profile</h2>
-        <form action="" method="post">
+        <form action="" method="post" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="name">Name:</label>
                 <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($user['name']); ?>" required>
@@ -144,9 +164,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="email">Email:</label>
                 <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
             </div>
+            <div class="form-group">
+                <label for="image">Profile Image:</label>
+                <input type="file" id="image" name="image" accept="image/*">
+                <?php if ($user['image']): ?>
+                    <img src="../uploads/<?php echo htmlspecialchars($user['image']); ?>" alt="Profile Image" class="profile-image">
+                <?php endif; ?>
+            </div>
             <div class="button-group">
                 <button type="submit" class="save-button">Save Changes</button>
-                <a href="admin_dashboard.php" class="cancel-button">Cancel</a>
+                <a href="admin_dashboard.php" class="cancel-button">Back to Dashboard</a>
             </div>
         </form>
     </div>

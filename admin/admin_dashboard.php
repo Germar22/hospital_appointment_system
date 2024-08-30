@@ -8,8 +8,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'admin') {
     exit();
 }
 
+$user_id = $_SESSION['user_id'];
+
 // Fetch statistics or data for dashboard
-// Example: Number of doctors and patients
 $stmt = $pdo->query("SELECT COUNT(*) FROM doctors");
 $num_doctors = $stmt->fetchColumn();
 
@@ -21,6 +22,12 @@ $num_appointments = $stmt->fetchColumn();
 
 $stmt = $pdo->query("SELECT COUNT(*) FROM users");
 $num_users = $stmt->fetchColumn();
+
+// Fetch admin's profile image
+$stmt = $pdo->prepare("SELECT image FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$admin = $stmt->fetch();
+$profile_image = $admin['image'];
 ?>
 
 <!DOCTYPE html>
@@ -46,6 +53,30 @@ $num_users = $stmt->fetchColumn();
             padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-card {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .profile-card img {
+            border-radius: 50%;
+            width: 100px; /* Fixed width */
+            height: 100px; /* Fixed height */
+            object-fit: cover; /* Ensure the image covers the entire area */
+            margin-right: 20px;
+        }
+        .profile-card h1 {
+            margin: 0;
+        }
+        .profile-card p {
+            margin: 5px 0;
         }
         .card {
             background: #fff;
@@ -94,19 +125,26 @@ $num_users = $stmt->fetchColumn();
 </div>
 
 <div class="container">
-    <div class="card">
-        <h2>Dashboard Overview</h2>
-        <p>Number of Doctors: <?php echo $num_doctors; ?></p>
-        <p>Number of Patients: <?php echo $num_patients; ?></p>
-        <p>Number of Appointments: <?php echo $num_appointments; ?></p>
-        <p>Number of Users: <?php echo $num_users; ?></p>
+    <div class="profile-card">
+        <?php if ($profile_image): ?>
+            <img src="../uploads/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image">
+        <?php else: ?>
+            <img src="../uploads/default.png" alt="Profile Image"> <!-- Default image if no profile image -->
+        <?php endif; ?>
+        <div>
+            <h1>Welcome, Admin</h1>
+            <p>Number of Doctors: <?php echo $num_doctors; ?></p>
+            <p>Number of Patients: <?php echo $num_patients; ?></p>
+            <p>Number of Appointments: <?php echo $num_appointments; ?></p>
+            <p>Number of Users: <?php echo $num_users; ?></p>
+        </div>
     </div>
 
     <div class="card dashboard-links">
         <h2>Manage Sections</h2>
         <a href="manage_users.php">Manage Users</a>
         <a href="manage_appointments.php">Manage Appointments</a>
-        <a href="update_profile.php">Update Profile</a> <!-- New Link -->
+        <a href="update_profile.php">Update Profile</a> <!-- Link to profile update -->
     </div>
 
     <div class="logout">

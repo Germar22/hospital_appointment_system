@@ -2,16 +2,16 @@
 session_start();
 include '../db.php'; // Ensure this path is correct
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../index.php"); // Redirect to login page if not logged in
+// Check if user is logged in and is a patient
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'patient') {
+    header("Location: ../index.php"); // Redirect to login page if not logged in or not a patient
     exit();
 }
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch patient details (name and email)
-$stmt = $pdo->prepare("SELECT name, email FROM users WHERE id = ?");
+// Fetch patient details (name and image)
+$stmt = $pdo->prepare("SELECT name, image FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
 
@@ -93,6 +93,28 @@ if (isset($_POST['cancel_appointment_id'])) {
         h3 {
             color: #555;
             text-align: center;
+        }
+        .profile {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px; /* Space below the profile section */
+        }
+        .profile img {
+            border-radius: 50%;
+            width: 100px; /* Adjust the width to fit the design */
+            height: 100px; /* Adjust the height to maintain aspect ratio */
+            object-fit: cover; /* Ensure the image covers the area without distortion */
+            margin-right: 15px; /* Space between the image and name */
+        }
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .profile-info h3 {
+            margin: 0;
+            font-size: 22px; /* Adjust the font size */
+            color: #333;
         }
         .table-wrapper {
             max-height: 400px; /* Set the maximum height for the table */
@@ -195,6 +217,14 @@ if (isset($_POST['cancel_appointment_id'])) {
 </head>
 <body>
     <div class="container">
+        <!-- Profile Section -->
+        <div class="profile">
+            <img src="../uploads/<?php echo htmlspecialchars($user['image']); ?>" alt="Profile Image" onerror="this.onerror=null; this.src='../uploads/default-profile.png';">
+            <div class="profile-info">
+                <h3><?php echo htmlspecialchars($user['name']); ?></h3>
+            </div>
+        </div>
+
         <h2>Welcome, <?php echo htmlspecialchars($user['name']); ?></h2>
         <h3>Your Recent Appointments</h3>
         <?php if (!empty($appointments)): ?>

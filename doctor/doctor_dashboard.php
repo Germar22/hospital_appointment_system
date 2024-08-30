@@ -10,6 +10,11 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'doctor') {
 
 $doctor_id = $_SESSION['user_id']; 
 
+// Fetch doctor details for profile image
+$stmt = $pdo->prepare("SELECT image FROM users WHERE id = ?");
+$stmt->execute([$doctor_id]);
+$doctor = $stmt->fetch();
+
 // Fetch appointments for the logged-in doctor
 $stmt = $pdo->prepare("
     SELECT a.id AS appointment_id, p.name AS patient_name, a.appointment_date, a.status
@@ -64,6 +69,18 @@ if (isset($_POST['ajax_action'])) {
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative; /* Add relative positioning */
+        }
+
+        .profile-image {
+            display: block;
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            position: absolute; /* Absolute positioning */
+            top: 20px;
+            left: 20px;
         }
 
         h2 {
@@ -73,21 +90,21 @@ if (isset($_POST['ajax_action'])) {
         }
 
         .table-wrapper {
-            max-height: 400px; /* Adjust as needed */
+            margin-top: 120px; /* Adjust margin to ensure table is not overlapped by profile image */
+            max-height: 400px;
             overflow-y: auto;
-            margin-bottom: 20px; /* Space below the table */
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            border: 1px solid #ddd; /* Add border around table */
+            border: 1px solid #ddd;
         }
 
         th, td {
             padding: 12px;
             text-align: left;
-            border: 1px solid #ddd; /* Add border around each cell */
+            border: 1px solid #ddd;
         }
 
         th {
@@ -118,7 +135,7 @@ if (isset($_POST['ajax_action'])) {
         }
 
         .status.Approved {
-            background-color: #28a745;
+            background-color: #307f1b;
         }
 
         .status.Cancelled {
@@ -134,7 +151,7 @@ if (isset($_POST['ajax_action'])) {
             display: inline-block;
             margin: 5px;
             padding: 10px;
-            background-color: #ff2f43;
+            background-color: #007bff;
             color: #fff;
             text-decoration: none;
             border-radius: 4px;
@@ -146,7 +163,7 @@ if (isset($_POST['ajax_action'])) {
         }
 
         .action-button {
-            background-color: #28a745;
+            background-color: #15a38e;
             color: white;
             border: none;
             padding: 5px 12px;
@@ -161,19 +178,22 @@ if (isset($_POST['ajax_action'])) {
         }
 
         form {
-            margin: 0; /* Remove default form margin */
+            margin: 0;
         }
 
         .action-column {
-            width: 120px; /* Set a fixed width for the action column */
+            width: 120px;
             text-align: center;
         }
+
         .action-button.complete-btn {
             background-color: #15a38e;
         }
+
         .action-button.complete-btn:hover {
             background-color: #138496;
         }
+
         .status.Completed {
             background-color: #15a38e;
         }
@@ -181,7 +201,12 @@ if (isset($_POST['ajax_action'])) {
 </head>
 <body>
     <div class="container">
-        <h2>Your Appointments</h2>
+        <?php if (!empty($doctor['image'])): ?>
+            <img src="../uploads/<?php echo htmlspecialchars($doctor['image']); ?>" alt="Profile Image" class="profile-image">
+        <?php endif; ?>
+
+        <h2>Your Upcoming Appointments</h2>
+
         <div class="table-wrapper">
             <table>
                 <thead>
@@ -220,6 +245,7 @@ if (isset($_POST['ajax_action'])) {
         </div>
 
         <div class="nav-links">
+            <a href="update_profile.php">Update Profile</a>
             <a href="../logout.php">Logout</a>
         </div>
     </div>

@@ -34,7 +34,7 @@ $users = $stmt->fetchAll();
         }
         .container {
             padding: 20px;
-            max-width: 1200px;
+            max-width: 900px; /* Reduced width from 1200px to 900px */
             margin: 0 auto;
         }
         .card {
@@ -53,39 +53,57 @@ $users = $stmt->fetchAll();
             border: 1px solid #ddd;
         }
         th, td {
-            padding: 10px;
+            padding: 12px;
             text-align: left;
         }
         th {
-            background-color: #f4f4f4;
+            background-color: #007bff;
+            color: white;
         }
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
         tr:hover {
-            background-color: #e9e9e9;
+            background-color: #f1f1f1;
         }
-        .actions a {
-            margin-right: 10px;
-            color: #007bff;
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        .actions .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            color: white;
             text-decoration: none;
+            font-size: 14px;
+            text-align: center;
         }
-        .actions a:hover {
-            text-decoration: underline;
+        .actions .btn.edit {
+            background-color: #007bff;
+        }
+        .actions .btn.edit:hover {
+            background-color: #0056b3;
+        }
+        .actions .btn.delete {
+            background-color: #dc3545;
+        }
+        .actions .btn.delete:hover {
+            background-color: #c82333;
         }
         .logout {
             text-align: center;
             margin-top: 20px;
         }
         .logout a {
-            background-color: #dc3545;
+            background-color: #007bff;
             color: white;
             padding: 10px 20px;
             border-radius: 4px;
             text-decoration: none;
         }
         .logout a:hover {
-            background-color: #c82333;
+            background-color: #0056b3;
         }
     </style>
 </head>
@@ -116,8 +134,8 @@ $users = $stmt->fetchAll();
                     <td><?php echo htmlspecialchars($user['email']); ?></td>
                     <td><?php echo htmlspecialchars($user['user_type']); ?></td>
                     <td class="actions">
-                        <a href="edit_user.php?id=<?php echo $user['id']; ?>">Edit</a>
-                        <a href="delete_user.php?id=<?php echo $user['id']; ?>">Delete</a>
+                        <a href="edit_user.php?id=<?php echo $user['id']; ?>" class="btn edit">Edit</a>
+                        <a href="delete_user.php?id=<?php echo $user['id']; ?>" class="btn delete" onclick="return confirm('Are you sure you want to delete this user?');">Delete</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>

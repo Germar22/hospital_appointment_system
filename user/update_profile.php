@@ -1,32 +1,51 @@
 <?php
 session_start();
-include '../db.php'; // Adjust path if needed
+include '../db.php'; // Ensure this path is correct
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: ../index.php");
+// Check if user is logged in and is a patient
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'patient') {
+    header("Location: ../index.php"); // Redirect to login page if not logged in or not a patient
     exit();
 }
 
 $user_id = $_SESSION['user_id'];
-$message = ""; // Initialize message variable
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    
-    // Update user data
-    $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ? WHERE id = ?");
-    if ($stmt->execute([$name, $email, $user_id])) {
-        $message = 'Changes have been saved.';
-    } else {
-        $message = 'Failed to update profile. Please try again.';
-    }
-}
-
-// Fetch current user details
-$stmt = $pdo->prepare("SELECT name, email FROM users WHERE id = ?");
+// Fetch patient details (name, email, and image)
+$stmt = $pdo->prepare("SELECT name, email, image FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
+
+// Handle case where user details are not found
+if (!$user) {
+    echo "<p>Error: User details not found. Please contact support.</p>";
+    exit();
+}
+
+// Handle profile image upload
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_FILES['image'])) {
+        $file = $_FILES['image'];
+        $upload_dir = '../uploads/';
+        $upload_file = $upload_dir . basename($file['name']);
+        $file_type = strtolower(pathinfo($upload_file, PATHINFO_EXTENSION));
+
+        // Check if file is a valid image
+        $allowed_types = ['jpg', 'jpeg', 'png'];
+        if (in_array($file_type, $allowed_types) && $file['size'] <= 2000000) {
+            if (move_uploaded_file($file['tmp_name'], $upload_file)) {
+                // Update the user image in the database
+                $stmt = $pdo->prepare("UPDATE users SET image = ? WHERE id = ?");
+                $stmt->execute([basename($file['name']), $user_id]);
+                header("Location: update_profile.php"); // Refresh the page to reflect changes
+                exit();
+            } else {
+                echo "<p>Error: File upload failed. Please try again.</p>";
+            }
+        } else {
+            echo "<p>Error: Invalid file type or size. Please upload a JPG, JPEG, or PNG image under 2MB.</p>";
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -42,116 +61,120 @@ $user = $stmt->fetch();
             margin: 0;
             padding: 0;
         }
-        .navbar {
-            background-color: #007bff;
-            padding: 10px;
-            color: white;
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #333;
             text-align: center;
         }
-        .container {
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        .profile {
+            display: flex;
+            align-items: center;
             margin-bottom: 20px;
         }
-        .card h2 {
-            margin-top: 0;
+        .profile img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .profile-info h3 {
+            margin: 0;
+            font-size: 22px;
+            color: #333;
         }
         .form-group {
             margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
         .form-group label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
-            text-align: center;
         }
         .form-group input[type="text"],
-        .form-group input[type="email"] {
+        .form-group input[type="email"],
+        .form-group input[type="file"] {
             width: 100%;
-            max-width: 400px;
             padding: 8px;
             border-radius: 4px;
             border: 1px solid #ccc;
-            box-sizing: border-box;
         }
-        .button-group {
-            text-align: center;
-            margin-top: 20px;
+        .form-group input[type="file"] {
+            border: none;
         }
-        .button-group button,
-        .button-group a {
-            padding: 10px 20px;
-            margin: 5px;
-            border-radius: 4px;
-            text-decoration: none;
+        .form-group button {
+            background-color: #007bff;
             color: white;
-            font-size: 16px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
             cursor: pointer;
         }
-        .save-button {
-            background-color: #007bff;
-            border: none;
-            outline: none;
-        }
-        .save-button:hover {
+        .form-group button:hover {
             background-color: #0056b3;
         }
-        .cancel-button {
-            background-color: #dc3545;
-        }
-        .cancel-button:hover {
-            background-color: #c82333;
-        }
-        .notification {
-            background-color: #28a745;
-            color: white;
-            padding: 10px;
-            border-radius: 4px;
+        .nav-links {
+            margin-top: 20px;
             text-align: center;
-            margin-bottom: 20px;
+        }
+        .nav-links a {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px 15px;
+            color: #007bff;
+            text-decoration: none;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .nav-links a:hover {
+            background-color: #007bff;
+            color: #fff;
         }
     </style>
 </head>
 <body>
-
-<div class="navbar">
-    <h1>Update Profile</h1>
-</div>
-
-<div class="container">
-    <?php if (!empty($message)): ?>
-        <div class="notification"><?php echo htmlspecialchars($message); ?></div>
-    <?php endif; ?>
-
-    <div class="card">
+    <div class="container">
         <h2>Update Profile</h2>
-        <form action="" method="post">
+        <div class="profile">
+            <img src="../uploads/<?php echo htmlspecialchars($user['image']); ?>" alt="Profile Image" onerror="this.onerror=null; this.src='../uploads/default-profile.png';">
+            <div class="profile-info">
+                <h3><?php echo htmlspecialchars($user['name']); ?></h3>
+                <p><?php echo htmlspecialchars($user['email']); ?></p>
+            </div>
+        </div>
+        <form method="post" enctype="multipart/form-data">
             <div class="form-group">
-                <label for="name">Name:</label>
+                <label for="name">Name</label>
                 <input type="text" id="name" name="name" value="<?php echo htmlspecialchars($user['name']); ?>" required>
             </div>
             <div class="form-group">
-                <label for="email">Email:</label>
+                <label for="email">Email</label>
                 <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
             </div>
-            <div class="button-group">
-                <button type="submit" class="save-button">Save Changes</button>
-                <a href="patient_dashboard.php" class="cancel-button">Cancel</a>
+            <div class="form-group">
+                <label for="image">Profile Image</label>
+                <input type="file" id="image" name="image">
+            </div>
+            <div class="form-group">
+                <button type="submit">Update Profile</button>
             </div>
         </form>
+        <div class="nav-links">
+            <a href="patient_dashboard.php">Back to Dashboard</a>
+            <a href="../logout.php">Logout</a>
+        </div>
     </div>
-</div>
-
 </body>
 </html>
-

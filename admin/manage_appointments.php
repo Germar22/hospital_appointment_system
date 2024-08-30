@@ -104,13 +104,13 @@ $appointments = $stmt->fetchAll();
             font-weight: bold;
         }
         .status.Approved {
-            background-color: #28a745; /* Bright green */
+            background-color: #307f1b; /* Bright green */
         }
         .status.Pending {
-            background-color: #ffc107; /* Bright orange */
+            background-color:  #ffc107; /* Bright orange */
         }
         .status.Cancelled {
-            background-color: #e74c3c; /* Bright red */
+            background-color: #dc3545; /* Bright red */
         }
         .status.Completed {
             background-color: #15a38e; /* Deep blue */

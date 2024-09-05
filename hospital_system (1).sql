@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 30, 2024 at 04:25 PM
+-- Generation Time: Sep 05, 2024 at 02:11 AM
 -- Server version: 10.4.28-MariaDB
--- PHP Version: 8.0.28
+-- PHP Version: 8.3.11
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -105,7 +105,9 @@ INSERT INTO `appointments` (`id`, `patient_id`, `doctor_id`, `appointment_date`,
 (122, 21, 11, '2024-09-06 21:52:00', 'Cancelled', '2024-08-30 13:52:13', '2024-08-30 13:52:15', 'pat13', 'doc'),
 (123, 15, 13, '2024-09-06 22:11:00', 'Cancelled', '2024-08-30 14:11:09', '2024-08-30 14:11:12', 'pat', 'doc3'),
 (124, 15, 13, '2024-09-03 22:20:00', 'Cancelled', '2024-08-30 14:20:14', '2024-08-30 14:20:17', 'pat', 'doc3'),
-(125, 15, 11, '2024-09-03 22:23:00', 'Cancelled', '2024-08-30 14:23:39', '2024-08-30 14:23:41', 'pat', 'doc');
+(125, 15, 11, '2024-09-03 22:23:00', 'Cancelled', '2024-08-30 14:23:39', '2024-08-30 14:23:41', 'pat', 'doc'),
+(126, 15, 11, '2024-09-26 08:27:00', 'Pending', '2024-09-04 00:27:55', '2024-09-04 00:27:55', 'pat', 'doc'),
+(127, 29, 11, '2024-10-03 10:03:00', 'Pending', '2024-09-05 02:03:14', '2024-09-05 02:03:14', 'waw', 'doc');
 
 -- --------------------------------------------------------
 
@@ -156,7 +158,8 @@ INSERT INTO `patients` (`id`, `user_id`, `name`, `email`) VALUES
 (18, 30, 'pat4', 'pat4@gmail.com'),
 (20, 35, 'pat12', 'pat12@gmail.com'),
 (21, 37, 'pat13', 'pat13@gmail.com'),
-(23, 39, 'pat11', 'pat11@gmail.com');
+(23, 39, 'pat11', 'pat11@gmail.com'),
+(29, 49, 'waw', 'waw@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -194,7 +197,8 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `user_type`, `created_at
 (35, 'pat12', 'pat12@gmail.com', '$2y$10$c/uN65.Lsc6Ghm4qOTOxauZMLLvZQGiKPiAVmDhXezFG3MyFQhOVu', 'patient', '2024-08-30 11:24:35', '2024-08-30 11:24:35', NULL),
 (36, 'admin13', 'admin13@gmail.com', '$2y$10$CycaD1dJG6WCjdRxwUOX7uYI0AO/gA/3DhKbmmxik25vxon38Shu6', 'admin', '2024-08-30 11:25:25', '2024-08-30 11:25:25', NULL),
 (37, 'pat13', 'pat13@gmail.com', '$2y$10$X7O.SzX69KQvleyuydhVBObbS8t.onmIoJcHQCZSKWIf6zGowAlXG', 'patient', '2024-08-30 11:43:33', '2024-08-30 13:22:01', NULL),
-(39, 'pat11', 'pat11@gmail.com', '$2y$10$.pUZHifl7K7dpZwnz4txa.riy.F80dKSEfEGT7PbHusJKu0WIZ4ge', 'patient', '2024-08-30 14:04:13', '2024-08-30 14:04:13', NULL);
+(39, 'pat11', 'pat11@gmail.com', '$2y$10$.pUZHifl7K7dpZwnz4txa.riy.F80dKSEfEGT7PbHusJKu0WIZ4ge', 'patient', '2024-08-30 14:04:13', '2024-08-30 14:04:13', NULL),
+(49, 'waw', 'waw@gmail.com', '$2y$10$ozGQ99OctODa5UO2chq.yeIPLINjPe5gX.QCvXwqixPvrr4DU6vHK', 'patient', '2024-09-05 02:02:59', '2024-09-05 02:02:59', NULL);
 
 --
 -- Indexes for dumped tables
@@ -227,7 +231,8 @@ ALTER TABLE `patients`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `email_2` (`email`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -237,7 +242,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `appointments`
 --
 ALTER TABLE `appointments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
 
 --
 -- AUTO_INCREMENT for table `doctors`
@@ -249,13 +254,13 @@ ALTER TABLE `doctors`
 -- AUTO_INCREMENT for table `patients`
 --
 ALTER TABLE `patients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=50;
 
 --
 -- Constraints for dumped tables

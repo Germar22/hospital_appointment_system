@@ -1,6 +1,10 @@
 <?php
 session_start();
 include 'db.php';
+require 'vendor/autoload.php'; // Ensure you have PHPMailer installed via Composer
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
@@ -27,6 +31,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
+    // Generate a 6-character verification code
+    $verification_code = random_int(100000, 999999);
+
+    // Store the verification code in session
+    $_SESSION['verification_code'] = $verification_code;
+
+    // Send the verification code to the user's email using Gmail SMTP
+    $mail = new PHPMailer(true);
+
+    try {
+        //Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'germarbunda75@gmail.com'; // Replace with your Gmail email address
+        $mail->Password = 'enwu ytph qccq eaia';    // Replace with your Gmail app password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+
+        //Recipients
+        $mail->setFrom('your-email@gmail.com', 'Your App Name');
+        $mail->addAddress($email); // Send to the user's email
+
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = 'Your Verification Code';
+        $mail->Body = "Your verification code is <strong>$verification_code</strong>";
+
+        $mail->send();
+        echo 'Verification code sent to your email.';
+    } catch (Exception $e) {
+        echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+        exit();
+    }
+
+    // Validate the verification code
+    $entered_code = $_POST['verification_code'];
+    if ($entered_code != $_SESSION['verification_code']) {
+        echo "Invalid verification code. Please try again.";
+        exit();
+    }
+
     // Insert user data
     $stmt = $pdo->prepare("INSERT INTO users (name, email, password, user_type, image) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([$name, $email, $password, $user_type, $image]);
@@ -42,14 +88,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute([$user_id, $name, $email]);
     }
 
-    $_SESSION['user_id'] = $user_id;
+    // Clear the verification code from the session after successful registration
+    unset($_SESSION['verification_code']);
 
+    $_SESSION['user_id'] = $user_id;
     header("Location: index.php");
     exit();
 }
 ?>
-
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -84,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         input[type="text"],
         input[type="email"],
         input[type="password"],
+        input[type="time"],
         textarea,
         select,
         input[type="file"] {
@@ -157,6 +204,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <label for="image">Profile Image:</label>
         <input type="file" id="image" name="image" accept="image/*">
 
+        <label for="verification_code">Verification Code:</label>
+        <input type="text" id="verification_code" name="verification_code" maxlength="6" required>
+
         <input type="submit" value="Register">
     </form>
 
@@ -173,6 +223,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             specializationContainer.style.display = 'none';
         }
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var notificationMessage = document.createElement('p');
+        notificationMessage.textContent = "A verification code has been sent to your email. Please enter the code below.";
+        document.querySelector('.container').insertBefore(notificationMessage, document.querySelector('form'));
     });
 </script>
 

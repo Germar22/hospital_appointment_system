@@ -1,21 +1,23 @@
 <?php
 session_start();
-include 'db.php';
-require 'vendor/autoload.php'; // Ensure you have PHPMailer installed via Composer
+include 'db.php'; // Ensure this file contains your database connection setup
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+// Initialize variables
+$email = '';
+$message = '';
+$message_type = '';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
-    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
-    $user_type = $_POST['user_type'];
-    $specialization = isset($_POST['specialization']) ? $_POST['specialization'] : '';
+// Handle registration
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
+    $name = isset($_POST['name']) ? trim($_POST['name']) : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $password = isset($_POST['password']) ? trim($_POST['password']) : '';
+    $user_type = isset($_POST['user_type']) ? trim($_POST['user_type']) : '';
+    $specialization = isset($_POST['specialization']) ? trim($_POST['specialization']) : '';
 
     // Combine start and end times into a single string for availability schedule
-    $start_time = isset($_POST['start_time']) ? $_POST['start_time'] : '';
-    $end_time = isset($_POST['end_time']) ? $_POST['end_time'] : '';
+    $start_time = isset($_POST['start_time']) ? trim($_POST['start_time']) : '';
+    $end_time = isset($_POST['end_time']) ? trim($_POST['end_time']) : '';
     $availability_schedule = $start_time && $end_time ? "$start_time to $end_time" : '';
 
     // Handle image upload
@@ -31,69 +33,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    // Generate a 6-character verification code
-    $verification_code = random_int(100000, 999999);
+    // Check if the email already exists
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
+    $stmt->execute([$email]);
+    $email_exists = $stmt->fetchColumn() > 0;
 
-    // Store the verification code in session
-    $_SESSION['verification_code'] = $verification_code;
+    if ($email_exists) {
+        $message = "Email address is already registered. Please use a different email.";
+        $message_type = 'error';
+    } else {
+        // Hash the password
+        $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
-    // Send the verification code to the user's email using Gmail SMTP
-    $mail = new PHPMailer(true);
+        // Insert user data
+        $stmt = $pdo->prepare("INSERT INTO users (name, email, password, user_type, image) VALUES (?, ?, ?, ?, ?)");
+        try {
+            $stmt->execute([$name, $email, $hashed_password, $user_type, $image]);
 
-    try {
-        //Server settings
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'germarbunda75@gmail.com'; // Replace with your Gmail email address
-        $mail->Password = 'enwu ytph qccq eaia';    // Replace with your Gmail app password
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
+            $user_id = $pdo->lastInsertId();
 
-        //Recipients
-        $mail->setFrom('your-email@gmail.com', 'Your App Name');
-        $mail->addAddress($email); // Send to the user's email
+            // Insert additional data based on user type
+            if ($user_type === 'doctor') {
+                $stmt = $pdo->prepare("INSERT INTO doctors (user_id, name, specialization, availability_schedule) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$user_id, $name, $specialization, $availability_schedule]);
+            } elseif ($user_type === 'patient') {
+                $stmt = $pdo->prepare("INSERT INTO patients (user_id, name, email) VALUES (?, ?, ?)");
+                $stmt->execute([$user_id, $name, $email]);
+            }
 
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = 'Your Verification Code';
-        $mail->Body = "Your verification code is <strong>$verification_code</strong>";
-
-        $mail->send();
-        echo 'Verification code sent to your email.';
-    } catch (Exception $e) {
-        echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
-        exit();
+            $_SESSION['user_id'] = $user_id;
+            header("Location: index.php");
+            exit();
+        } catch (PDOException $e) {
+            $message = "Database error: " . $e->getMessage();
+            $message_type = 'error';
+        }
     }
-
-    // Validate the verification code
-    $entered_code = $_POST['verification_code'];
-    if ($entered_code != $_SESSION['verification_code']) {
-        echo "Invalid verification code. Please try again.";
-        exit();
-    }
-
-    // Insert user data
-    $stmt = $pdo->prepare("INSERT INTO users (name, email, password, user_type, image) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$name, $email, $password, $user_type, $image]);
-
-    $user_id = $pdo->lastInsertId();
-
-    // Insert additional data based on user type
-    if ($user_type === 'doctor') {
-        $stmt = $pdo->prepare("INSERT INTO doctors (user_id, name, specialization, availability_schedule) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$user_id, $name, $specialization, $availability_schedule]);
-    } elseif ($user_type === 'patient') {
-        $stmt = $pdo->prepare("INSERT INTO patients (user_id, name, email) VALUES (?, ?, ?)");
-        $stmt->execute([$user_id, $name, $email]);
-    }
-
-    // Clear the verification code from the session after successful registration
-    unset($_SESSION['verification_code']);
-
-    $_SESSION['user_id'] = $user_id;
-    header("Location: index.php");
-    exit();
 }
 ?>
 
@@ -104,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <style>
+        /* Add your CSS styles here */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
@@ -167,13 +143,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .login-link a:hover {
             text-decoration: underline;
         }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Register</h2>
+    <?php if (isset($message)): ?>
+        <div class="message <?php echo htmlspecialchars($message_type); ?>">
+            <?php echo htmlspecialchars($message); ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- Registration Form -->
     <form method="post" action="" enctype="multipart/form-data">
+        <h3>Register</h3>
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" required>
 
@@ -185,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <label for="user_type">User Type:</label>
         <select id="user_type" name="user_type" required>
-            <option value="">Select user type</option>
+            <option value="" disabled selected>Select User Type</option>
             <option value="admin">Admin</option>
             <option value="doctor">Doctor</option>
             <option value="patient">Patient</option>
@@ -195,19 +193,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <label for="specialization">Specialization:</label>
             <input type="text" id="specialization" name="specialization">
 
-            <label for="availability_schedule">Availability Schedule:</label>
+            <label for="start_time">Start Time:</label>
             <input type="time" id="start_time" name="start_time">
+            <label for="end_time">End Time:</label>
             <input type="time" id="end_time" name="end_time">
-            <p>Provide the available start and end times.</p>
+            <label for="availability_schedule">Availability Schedule:</label>
+            <textarea id="availability_schedule" name="availability_schedule" placeholder="e.g., 9 AM - 5 PM"></textarea>
         </div>
 
         <label for="image">Profile Image:</label>
-        <input type="file" id="image" name="image" accept="image/*">
+        <input type="file" id="image" name="image">
 
-        <label for="verification_code">Verification Code:</label>
-        <input type="text" id="verification_code" name="verification_code" maxlength="6" required>
-
-        <input type="submit" value="Register">
+        <input type="submit" name="register" value="Register">
     </form>
 
     <div class="login-link">
@@ -223,12 +220,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             specializationContainer.style.display = 'none';
         }
-    });
-
-    document.addEventListener("DOMContentLoaded", function() {
-        var notificationMessage = document.createElement('p');
-        notificationMessage.textContent = "A verification code has been sent to your email. Please enter the code below.";
-        document.querySelector('.container').insertBefore(notificationMessage, document.querySelector('form'));
     });
 </script>
 

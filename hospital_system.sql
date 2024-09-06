@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 05, 2024 at 02:11 AM
+-- Generation Time: Sep 06, 2024 at 12:44 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.3.11
 
@@ -171,6 +171,7 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
+  `email_verified` tinyint(1) DEFAULT 0,
   `password` varchar(255) NOT NULL,
   `user_type` enum('admin','doctor','patient') NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -182,23 +183,23 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `password`, `user_type`, `created_at`, `updated_at`, `image`) VALUES
-(23, 'admin', 'admin@gmail.com', '$2y$10$76BKDZcmD2xEMBXcLGaC/up1oi3OQ4mWF/fSxYsX9ErOo9ZsXrA7q', 'admin', '2024-08-28 15:44:24', '2024-08-30 03:46:10', '1724989570_356151013_1414531679398792_8049240220012412639_n.jpg'),
-(24, 'pat', 'pat@gmail.com', '$2y$10$.AWNTXtzlu9aAmaL87S9qeRK8vgg.tbjeZxq1jZxRtbtL93y6lnue', 'patient', '2024-08-28 15:44:46', '2024-08-30 14:23:57', '1725027837_327491193_936599814354707_2662984082626557660_n.jpg'),
-(25, 'pat2', 'pat2@gmail.com', '$2y$10$lwp9JQABBaTG3zXtD3QVG.AvDlOptzP0vaO2KrSCSYyzZHgJwK52e', 'patient', '2024-08-28 15:45:00', '2024-08-30 10:28:01', 'default_images/default.png'),
-(26, 'doc', 'doc@gmail.com', '$2y$10$cCt5eo8h5Xx0xYl6UDmwReIAZ0rnIJSoGHdI5lDk773ljfB4LTepO', 'doctor', '2024-08-28 15:45:31', '2024-08-30 03:59:32', '1724990372_357646359_975128816970660_8020607003782267481_n.jpg'),
-(27, 'doc2', 'doc2@gmail.com', '$2y$10$2uDwLCw8bM0PCpzHvh8AAusASRz7xIsMyyl1ceCqQq5EDMTvNJ5C.', 'doctor', '2024-08-28 15:46:08', '2024-08-30 10:28:01', 'default_images/default.png'),
-(28, 'patpat', 'pat3@gmail.com', '$2y$10$hqjYYmbhVFEWeDgUiUGLcetJ3A4SBmGxVoZ7IeBoPXSQos/rmbipy', 'patient', '2024-08-29 00:28:04', '2024-08-30 10:10:36', 'default.jpg'),
-(29, 'doc3', 'doc3@gmail.com', '$2y$10$F8sF/jrkC2fky8u7rUPXGu4HjD/L9U7etOs/IC9/vtAONKz.joAEa', 'doctor', '2024-08-29 10:09:36', '2024-08-30 10:28:01', 'default_images/default.png'),
-(30, 'pat4', 'pat4@gmail.com', '$2y$10$vrJafljCcilF2WbFviJsKuxz0H1jPugJGoG9BeMUEvG/Y6uhC7zO2', 'patient', '2024-08-30 10:24:15', '2024-08-30 10:28:01', 'default_images/default.png'),
-(31, 'admin2', 'admin2@gmail.com', '$2y$10$H3RAKjF/mEBewRa3MEf2zuQE7hx7j/WymDcZKkVscuAQ78xBAR7yW', 'admin', '2024-08-30 10:32:43', '2024-08-30 10:32:43', NULL),
-(32, 'admin3', 'admin3@gmail.com', '$2y$10$BFmI.cWQPnUDp0AHeM2VWuKRPhNLiu.0C498RLwnn2.El6w5I8CVG', 'admin', '2024-08-30 10:35:06', '2024-08-30 10:35:06', NULL),
-(34, 'admin12', 'admin12@gmail.com', '$2y$10$hGOj.1S0D3bMvk8TNxS8R..uxSscMMwb6ZmgvMbxi0k08GkyFOXIq', 'admin', '2024-08-30 11:00:33', '2024-08-30 11:00:33', NULL),
-(35, 'pat12', 'pat12@gmail.com', '$2y$10$c/uN65.Lsc6Ghm4qOTOxauZMLLvZQGiKPiAVmDhXezFG3MyFQhOVu', 'patient', '2024-08-30 11:24:35', '2024-08-30 11:24:35', NULL),
-(36, 'admin13', 'admin13@gmail.com', '$2y$10$CycaD1dJG6WCjdRxwUOX7uYI0AO/gA/3DhKbmmxik25vxon38Shu6', 'admin', '2024-08-30 11:25:25', '2024-08-30 11:25:25', NULL),
-(37, 'pat13', 'pat13@gmail.com', '$2y$10$X7O.SzX69KQvleyuydhVBObbS8t.onmIoJcHQCZSKWIf6zGowAlXG', 'patient', '2024-08-30 11:43:33', '2024-08-30 13:22:01', NULL),
-(39, 'pat11', 'pat11@gmail.com', '$2y$10$.pUZHifl7K7dpZwnz4txa.riy.F80dKSEfEGT7PbHusJKu0WIZ4ge', 'patient', '2024-08-30 14:04:13', '2024-08-30 14:04:13', NULL),
-(49, 'waw', 'waw@gmail.com', '$2y$10$ozGQ99OctODa5UO2chq.yeIPLINjPe5gX.QCvXwqixPvrr4DU6vHK', 'patient', '2024-09-05 02:02:59', '2024-09-05 02:02:59', NULL);
+INSERT INTO `users` (`id`, `name`, `email`, `email_verified`, `password`, `user_type`, `created_at`, `updated_at`, `image`) VALUES
+(23, 'admin', 'admin@gmail.com', 0, '$2y$10$76BKDZcmD2xEMBXcLGaC/up1oi3OQ4mWF/fSxYsX9ErOo9ZsXrA7q', 'admin', '2024-08-28 15:44:24', '2024-08-30 03:46:10', '1724989570_356151013_1414531679398792_8049240220012412639_n.jpg'),
+(24, 'pat', 'pat@gmail.com', 0, '$2y$10$.AWNTXtzlu9aAmaL87S9qeRK8vgg.tbjeZxq1jZxRtbtL93y6lnue', 'patient', '2024-08-28 15:44:46', '2024-09-06 00:36:09', '1725027837_327491193_936599814354707_2662984082626557660_n.jpg'),
+(25, 'pat2', 'pat2@gmail.com', 0, '$2y$10$lwp9JQABBaTG3zXtD3QVG.AvDlOptzP0vaO2KrSCSYyzZHgJwK52e', 'patient', '2024-08-28 15:45:00', '2024-08-30 10:28:01', 'default_images/default.png'),
+(26, 'doc', 'doc@gmail.com', 0, '$2y$10$cCt5eo8h5Xx0xYl6UDmwReIAZ0rnIJSoGHdI5lDk773ljfB4LTepO', 'doctor', '2024-08-28 15:45:31', '2024-08-30 03:59:32', '1724990372_357646359_975128816970660_8020607003782267481_n.jpg'),
+(27, 'doc2', 'doc2@gmail.com', 0, '$2y$10$2uDwLCw8bM0PCpzHvh8AAusASRz7xIsMyyl1ceCqQq5EDMTvNJ5C.', 'doctor', '2024-08-28 15:46:08', '2024-08-30 10:28:01', 'default_images/default.png'),
+(28, 'patpat', 'pat3@gmail.com', 0, '$2y$10$hqjYYmbhVFEWeDgUiUGLcetJ3A4SBmGxVoZ7IeBoPXSQos/rmbipy', 'patient', '2024-08-29 00:28:04', '2024-08-30 10:10:36', 'default.jpg'),
+(29, 'doc3', 'doc3@gmail.com', 0, '$2y$10$F8sF/jrkC2fky8u7rUPXGu4HjD/L9U7etOs/IC9/vtAONKz.joAEa', 'doctor', '2024-08-29 10:09:36', '2024-08-30 10:28:01', 'default_images/default.png'),
+(30, 'pat4', 'pat4@gmail.com', 0, '$2y$10$vrJafljCcilF2WbFviJsKuxz0H1jPugJGoG9BeMUEvG/Y6uhC7zO2', 'patient', '2024-08-30 10:24:15', '2024-08-30 10:28:01', 'default_images/default.png'),
+(31, 'admin2', 'admin2@gmail.com', 0, '$2y$10$H3RAKjF/mEBewRa3MEf2zuQE7hx7j/WymDcZKkVscuAQ78xBAR7yW', 'admin', '2024-08-30 10:32:43', '2024-08-30 10:32:43', NULL),
+(32, 'admin3', 'admin3@gmail.com', 0, '$2y$10$BFmI.cWQPnUDp0AHeM2VWuKRPhNLiu.0C498RLwnn2.El6w5I8CVG', 'admin', '2024-08-30 10:35:06', '2024-08-30 10:35:06', NULL),
+(34, 'admin12', 'admin12@gmail.com', 0, '$2y$10$hGOj.1S0D3bMvk8TNxS8R..uxSscMMwb6ZmgvMbxi0k08GkyFOXIq', 'admin', '2024-08-30 11:00:33', '2024-08-30 11:00:33', NULL),
+(35, 'pat12', 'pat12@gmail.com', 0, '$2y$10$c/uN65.Lsc6Ghm4qOTOxauZMLLvZQGiKPiAVmDhXezFG3MyFQhOVu', 'patient', '2024-08-30 11:24:35', '2024-08-30 11:24:35', NULL),
+(36, 'admin13', 'admin13@gmail.com', 0, '$2y$10$CycaD1dJG6WCjdRxwUOX7uYI0AO/gA/3DhKbmmxik25vxon38Shu6', 'admin', '2024-08-30 11:25:25', '2024-08-30 11:25:25', NULL),
+(37, 'pat13', 'pat13@gmail.com', 0, '$2y$10$X7O.SzX69KQvleyuydhVBObbS8t.onmIoJcHQCZSKWIf6zGowAlXG', 'patient', '2024-08-30 11:43:33', '2024-08-30 13:22:01', NULL),
+(39, 'pat11', 'pat11@gmail.com', 0, '$2y$10$.pUZHifl7K7dpZwnz4txa.riy.F80dKSEfEGT7PbHusJKu0WIZ4ge', 'patient', '2024-08-30 14:04:13', '2024-08-30 14:04:13', NULL),
+(49, 'waw', 'waw@gmail.com', 0, '$2y$10$ozGQ99OctODa5UO2chq.yeIPLINjPe5gX.QCvXwqixPvrr4DU6vHK', 'patient', '2024-09-05 02:02:59', '2024-09-05 02:02:59', NULL);
 
 --
 -- Indexes for dumped tables

@@ -2,7 +2,7 @@
 session_start();
 include '../db.php'; // Adjust path if needed
 
-// Check if user is logged in and is an admin
+// Check if user is logged in and is a patient
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'patient') {
     header("Location: ../index.php");
     exit();

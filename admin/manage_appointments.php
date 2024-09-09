@@ -8,6 +8,24 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'admin') {
     exit();
 }
 
+// Handle appointment deletion
+if (isset($_POST['delete_appointment'])) {
+    $appointment_id = $_POST['appointment_id'];
+    
+    // Delete the appointment from the database
+    $stmt = $pdo->prepare("DELETE FROM appointments WHERE id = ?");
+    if ($stmt->execute([$appointment_id])) {
+        $_SESSION['success_message'] = "Appointment deleted successfully.";
+    } else {
+        $_SESSION['error_message'] = "Failed to delete appointment.";
+    }
+
+    // Redirect to manage_appointments.php to avoid resubmission
+    header("Location: manage_appointments.php");
+    exit();
+}
+
+
 // Fetch appointments data ordered by appointment_id in descending order
 $stmt = $pdo->query("
     SELECT a.id AS appointment_id, u_patient.name AS patient_name, u_doctor.name AS doctor_name, a.appointment_date, a.status
@@ -19,6 +37,7 @@ $stmt = $pdo->query("
     ORDER BY a.id DESC
 ");
 $appointments = $stmt->fetchAll();
+
 ?>
 
 <!DOCTYPE html>
@@ -120,6 +139,19 @@ $appointments = $stmt->fetchAll();
             color: #999;
             margin-top: 20px;
         }
+        .delete-button {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+
     </style>
 </head>
 <body>
@@ -128,15 +160,16 @@ $appointments = $stmt->fetchAll();
         <h2>Manage Appointments</h2>
         <div class="table-wrapper">
             <table>
-                <thead>
-                    <tr>
-                        <th>Appointment ID</th>
-                        <th>Patient Name</th>
-                        <th>Doctor Name</th>
-                        <th>Appointment Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
+            <thead>
+    <tr>
+        <th>Appointment ID</th>
+        <th>Patient Name</th>
+        <th>Doctor Name</th>
+        <th>Appointment Date</th>
+        <th>Status</th>
+        <th>Action</th> <!-- New Action column -->
+    </tr>
+            </thead>
                 <tbody>
                     <?php if (!empty($appointments)): ?>
                         <?php foreach ($appointments as $appointment): ?>
@@ -148,11 +181,19 @@ $appointments = $stmt->fetchAll();
                                 <td class="status <?php echo htmlspecialchars($appointment['status']); ?>">
                                     <?php echo htmlspecialchars($appointment['status']); ?>
                                 </td>
+                                <td>
+                                    <?php if ($appointment['status'] === 'Cancelled'): ?>
+                                        <form method="post" style="display:inline;">
+                                            <input type="hidden" name="appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">
+                                            <button type="submit" name="delete_appointment" class="delete-button">Delete</button>
+                                        </form>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="5" class="no-appointments">No appointments found.</td>
+                            <td colspan="6" class="no-appointments">No appointments found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

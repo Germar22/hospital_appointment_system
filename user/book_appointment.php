@@ -10,10 +10,24 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'patient') {
 
 $patient_user_id = $_SESSION['user_id']; // Fetch the patient_id from session
 
+// Function to convert 24-hour time format to 12-hour format
+function convertTo12HourFormat($time) {
+    return date("g:i A", strtotime($time));
+}
+
+// Function to check if a time falls within a time range
+function isTimeWithinRange($time, $start_time, $end_time) {
+    $time = strtotime($time);
+    $start_time = strtotime($start_time);
+    $end_time = strtotime($end_time);
+    return $time >= $start_time && $time <= $end_time;
+}
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $doctor_id = $_POST['doctor_id'];
     $appointment_date = $_POST['appointment_date'];
+    $appointment_time = date("H:i:s", strtotime($appointment_date));
 
     // Ensure form data is valid
     if (empty($doctor_id) || empty($appointment_date)) {
@@ -32,25 +46,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $patient_id = $patient['id'];
             $patient_name = $patient['name'];
 
-            // Get doctor name
-            $stmt = $pdo->prepare("SELECT name FROM doctors WHERE id = ?");
+            // Get doctor details including availability
+            $stmt = $pdo->prepare("
+                SELECT d.name AS doctor_name, d.availability_schedule 
+                FROM doctors d
+                WHERE d.id = ?
+            ");
             $stmt->execute([$doctor_id]);
             $doctor = $stmt->fetch();
 
             if (!$doctor) {
                 $error_message = "Invalid doctor ID.";
             } else {
-                $doctor_name = $doctor['name'];
+                $doctor_name = $doctor['doctor_name'];
+                $availability_schedule = $doctor['availability_schedule'];
 
-                // Prepare and execute SQL statement with patient_name and doctor_name
-                $stmt = $pdo->prepare("
-                    INSERT INTO appointments (patient_id, doctor_id, patient_name, doctor_name, appointment_date, status, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, 'Pending', NOW(), NOW())
-                ");
-                if ($stmt->execute([$patient_id, $doctor_id, $patient_name, $doctor_name, $appointment_date])) {
-                    $success_message = "Appointment booked successfully.";
+                // Convert availability schedule to 12-hour format
+                list($start_time, $end_time) = explode(' to ', $availability_schedule);
+                $start_time_12 = convertTo12HourFormat($start_time);
+                $end_time_12 = convertTo12HourFormat($end_time);
+
+                // Validate appointment time within the doctor's availability time range
+                if (!isTimeWithinRange($appointment_time, $start_time, $end_time)) {
+                    $error_message = "The selected appointment time is outside the doctor's availability.";
                 } else {
-                    $error_message = "Failed to book appointment. Please try again.";
+                    // Prepare and execute SQL statement with patient_name and doctor_name
+                    $stmt = $pdo->prepare("
+                        INSERT INTO appointments (patient_id, doctor_id, patient_name, doctor_name, appointment_date, status, created_at, updated_at)
+                        VALUES (?, ?, ?, ?, ?, 'Pending', NOW(), NOW())
+                    ");
+                    if ($stmt->execute([$patient_id, $doctor_id, $patient_name, $doctor_name, $appointment_date])) {
+                        $success_message = "Appointment booked successfully.";
+                    } else {
+                        $error_message = "Failed to book appointment. Please try again.";
+                    }
                 }
             }
         }
@@ -156,14 +185,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <select id="doctor_id" name="doctor_id" required>
                 <option value="" disabled selected>Select a doctor</option>
                 <?php
-                // Fetch available doctors
-                $stmt = $pdo->query("SELECT id, name FROM doctors");
+                // Fetch available doctors and their availability schedules
+                $stmt = $pdo->query("
+                    SELECT d.id, d.name, d.availability_schedule 
+                    FROM doctors d
+                ");
                 while ($row = $stmt->fetch()) {
-                    echo "<option value=\"" . htmlspecialchars($row['id']) . "\">" . htmlspecialchars($row['name']) . "</option>";
+                    $availability_schedule = htmlspecialchars($row['availability_schedule']);
+                    
+                    // Convert availability schedule to 12-hour format
+                    list($start_time, $end_time) = explode(' to ', $availability_schedule);
+                    $start_time_12 = convertTo12HourFormat($start_time);
+                    $end_time_12 = convertTo12HourFormat($end_time);
+                    
+                    echo "<option value=\"" . htmlspecialchars($row['id']) . "\">" . htmlspecialchars($row['name']) . " (Available: $start_time_12 to $end_time_12)</option>";
                 }
                 ?>
             </select>
-            <label for="appointment_date">Appointment Date:</label>
+            <label for="appointment_date">Appointment Date and Time:</label>
             <input type="datetime-local" id="appointment_date" name="appointment_date" required>
             <div class="button-container">
                 <button type="submit">Book Appointment</button>

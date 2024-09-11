@@ -193,12 +193,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
             <label for="specialization">Specialization:</label>
             <input type="text" id="specialization" name="specialization">
 
+            <label for="availability_schedule">Availability Schedule:</label>
+
             <label for="start_time">Start Time:</label>
             <input type="time" id="start_time" name="start_time">
             <label for="end_time">End Time:</label>
             <input type="time" id="end_time" name="end_time">
-            <label for="availability_schedule">Availability Schedule:</label>
-            <textarea id="availability_schedule" name="availability_schedule" placeholder="e.g., 9 AM - 5 PM"></textarea>
         </div>
 
         <label for="image">Profile Image:</label>

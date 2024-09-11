@@ -25,7 +25,6 @@ if (isset($_POST['delete_appointment'])) {
     exit();
 }
 
-
 // Fetch appointments data ordered by appointment_id in descending order
 $stmt = $pdo->query("
     SELECT a.id AS appointment_id, u_patient.name AS patient_name, u_doctor.name AS doctor_name, a.appointment_date, a.status
@@ -37,7 +36,6 @@ $stmt = $pdo->query("
     ORDER BY a.id DESC
 ");
 $appointments = $stmt->fetchAll();
-
 ?>
 
 <!DOCTYPE html>
@@ -152,6 +150,24 @@ $appointments = $stmt->fetchAll();
             background-color: #c82333;
         }
 
+        th.appointment-id-column,
+        td.appointment-id-column {
+            width: 100px; /* Adjust the width as needed */
+        }
+
+        /* Set a fixed width for the Action column */
+        th.action-column,
+        td.action-column {
+            width: 150px; /* Adjust the width as needed */
+            text-align: center;
+        }
+
+        /* Ensure the Action column does not shift */
+        td.action-column:empty::before {
+            content: "-"; /* Adds a placeholder to avoid column shifting */
+            visibility: hidden;
+        }
+
     </style>
 </head>
 <body>
@@ -160,28 +176,28 @@ $appointments = $stmt->fetchAll();
         <h2>Manage Appointments</h2>
         <div class="table-wrapper">
             <table>
-            <thead>
-    <tr>
-        <th>Appointment ID</th>
-        <th>Patient Name</th>
-        <th>Doctor Name</th>
-        <th>Appointment Date</th>
-        <th>Status</th>
-        <th>Action</th> <!-- New Action column -->
-    </tr>
-            </thead>
+                <thead>
+                    <tr>
+                        <th class="appointment-id-column">Appointment ID</th>
+                        <th>Patient Name</th>
+                        <th>Doctor Name</th>
+                        <th>Appointment Date</th>
+                        <th>Status</th>
+                        <th class="action-column">Action</th>
+                    </tr>
+                </thead>
                 <tbody>
                     <?php if (!empty($appointments)): ?>
                         <?php foreach ($appointments as $appointment): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
+                                <td class="appointment-id-column"><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
                                 <td><?php echo htmlspecialchars($appointment['patient_name']); ?></td>
                                 <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
                                 <td><?php echo htmlspecialchars(date('F j, Y, g:i a', strtotime($appointment['appointment_date']))); ?></td>
                                 <td class="status <?php echo htmlspecialchars($appointment['status']); ?>">
                                     <?php echo htmlspecialchars($appointment['status']); ?>
                                 </td>
-                                <td>
+                                <td class="action-column">
                                     <?php if ($appointment['status'] === 'Cancelled'): ?>
                                         <form method="post" style="display:inline;">
                                             <input type="hidden" name="appointment_id" value="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">

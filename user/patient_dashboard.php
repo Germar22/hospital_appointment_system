@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../db.php'; // Adjust path if needed
+include '../db.php';
 
 // Check if user is logged in and is a patient
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'patient') {
@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'patient') {
     exit();
 }
 
-$patient_id = $_SESSION['user_id']; 
+$patient_id = $_SESSION['user_id'];
 
 // Fetch patient details for profile image
 $stmt = $pdo->prepare("SELECT image FROM users WHERE id = ?");
@@ -66,8 +66,6 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
             padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
-            display: flex;
-            flex-direction: column;
         }
         .profile-card {
             display: flex;
@@ -141,7 +139,7 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
         }
         th, td {
             padding: 12px;
-            text-align: center; /* Center align all cells horizontally */
+            text-align: center;
             border: 1px solid #ddd;
         }
         th {
@@ -157,8 +155,8 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
         }
         .status {
             display: flex;
-            align-items: center; /* Center vertically */
-            justify-content: center; /* Center horizontally */
+            align-items: center;
+            justify-content: center;
             padding: 5px;
             border-radius: 4px;
             color: white;
@@ -189,9 +187,6 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
         .action-button:hover {
             background-color: #c82333;
         }
-        .hidden {
-            visibility: hidden;
-        }
     </style>
 </head>
 <body>
@@ -212,6 +207,7 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
     <div class="dashboard-links">
         <a href="book_appointment.php">Book Appointment</a>
         <a href="update_profile.php">Update Profile</a>
+        <a href="chat_doctor.php">Chat with Doctor</a> <!-- Link to chat page -->
         <a href="../logout.php">Logout</a>
     </div>
 

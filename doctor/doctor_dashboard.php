@@ -1,6 +1,6 @@
 <?php
 session_start();
-include '../db.php'; // Adjust path if needed
+include '../db.php';
 
 // Check if user is logged in and is a doctor
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'doctor') {
@@ -65,162 +65,133 @@ if (isset($_POST['ajax_action'])) {
         }
         .navbar {
             background-color: #007bff;
-            padding: 10px;
             color: white;
+            padding: 15px;
             text-align: center;
+            font-size: 24px;
         }
         .container {
-            padding: 20px;
             max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         .profile-card {
             display: flex;
             align-items: center;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .profile-card img {
-            border-radius: 50%;
             width: 100px;
             height: 100px;
-            object-fit: cover;
+            border-radius: 50%;
             margin-right: 20px;
         }
         .profile-card h1 {
+            font-size: 24px;
+            color: #333;
             margin: 0;
         }
-        .profile-card p {
-            margin: 5px 0;
-        }
         .card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .card h2 {
-            margin-top: 0;
-        }
-        .logout {
-            display: block;
-            text-align: center;
-            margin-top: 20px;
-        }
-        .logout a {
-            background-color: #dc3545;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            text-decoration: none;
-        }
-        .logout a:hover {
-            background-color: #c82333;
-        }
-        .dashboard-links a {
-            display: block;
-            padding: 10px;
-            margin: 5px 0;
             background: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            text-align: center;
-        }
-        .dashboard-links a:hover {
-            background-color: #0056b3;
+            color: #fff;
+            margin: 0;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 10px 10px 0 0;
         }
         .table-wrapper {
-            margin-top: 20px;
-            max-height: 400px;
-            overflow-y: auto;
+            padding: 20px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            border: 1px solid #ddd;
         }
         th, td {
-            padding: 12px;
+            padding: 10px;
             text-align: left;
-            border: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
         }
         th {
-            background-color: #007bff;
-            color: white;
-            font-weight: bold;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
+            background-color: #f4f4f4;
         }
         .status {
-            padding: 5px;
-            border-radius: 4px;
-            color: white;
-            text-align: center;
             display: inline-block;
-            min-width: 80px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
         }
         .status.Pending {
             background-color: #ffc107;
+            color: #fff;
         }
         .status.Approved {
-            background-color: #307f1b;
+            background-color: #28a745;
+            color: #fff;
         }
         .status.Completed {
-            background-color: #15a38e;
+            background-color: #007bff;
+            color: #fff;
         }
-        .status.Cancelled {
-            background-color: #dc3545;
+        .action-column {
+            text-align: center;
         }
         .action-button {
-            background-color: #15a38e;
+            background-color: #007bff;
             color: white;
             border: none;
-            padding: 5px 12px;
+            padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
-            text-align: center;
+            transition: background-color 0.3s;
         }
         .action-button:hover {
-            background-color: #218838;
+            background-color: #0056b3;
         }
-        .action-button.complete-btn {
-            background-color: #15a38e;
+        .dashboard-links {
+            margin-top: 20px;
         }
-        .action-button.complete-btn:hover {
-            background-color: #138496;
+        .dashboard-links a {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-right: 10px;
+            color: white;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .dashboard-links a:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-
 <div class="navbar">
-    <h1>Doctor Dashboard</h1>
+    Doctor Dashboard
 </div>
 
 <div class="container">
     <div class="profile-card">
-    <img src="../uploads/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image">
-
-        <div>
-            <h1>Welcome, Doctor</h1>
-        </div>
+        <img src="../uploads/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image">
+        <h1>Welcome, Doctor</h1>
     </div>
 
     <div class="card">
         <h2>Your Upcoming Appointments</h2>
-
         <div class="table-wrapper">
             <table>
                 <thead>
@@ -261,6 +232,7 @@ if (isset($_POST['ajax_action'])) {
 
     <div class="dashboard-links">
         <a href="update_profile.php">Update Profile</a>
+        <a href="chat_patient.php">Chat with Patients</a>
         <a href="../logout.php">Logout</a>
     </div>
 </div>
@@ -280,10 +252,11 @@ if (isset($_POST['ajax_action'])) {
                     if (response === "Success") {
                         if (action === 'approve') {
                             button.closest('tr').find('.status').removeClass('Pending').addClass('Approved').text('Approved');
+                            button.remove();
                         } else if (action === 'complete') {
                             button.closest('tr').find('.status').removeClass('Approved').addClass('Completed').text('Completed');
+                            button.remove();
                         }
-                        button.remove(); // Remove the button after action
                     } else {
                         alert('Action failed. Please try again.');
                     }
@@ -292,6 +265,5 @@ if (isset($_POST['ajax_action'])) {
         });
     });
 </script>
-
 </body>
 </html>

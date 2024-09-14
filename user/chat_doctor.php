@@ -22,7 +22,7 @@ if ($chat_id) {
     }
 }
 
-// Fetch the list of doctors with their profile images and unread message counts
+// Fetch the list of doctors with profile images and unread message counts
 $stmt = $pdo->prepare("
     SELECT u.id, u.name, u.image,
            IFNULL(SUM(CASE WHEN m.is_read = 0 AND m.sender_id != ? THEN 1 ELSE 0 END), 0) AS unread_messages
@@ -42,7 +42,7 @@ $doctors = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat Interface</title>
+    <title>Chat with Doctors</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         body {
@@ -79,9 +79,6 @@ $doctors = $stmt->fetchAll();
             align-items: center;
             position: relative;
         }
-        .contact-item:hover {
-            background-color: #f0f2f5;
-        }
         .contact-item img {
             width: 40px;
             height: 40px;
@@ -89,12 +86,12 @@ $doctors = $stmt->fetchAll();
             margin-right: 10px;
         }
         .notification-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #dc3545;
+            width: 10px;
+            height: 10px;
+            background-color: red;
             border-radius: 50%;
             position: absolute;
-            top: 15px;
+            top: 10px;
             right: 10px;
         }
         #chat-box {
@@ -209,7 +206,7 @@ $doctors = $stmt->fetchAll();
     <a href="patient_dashboard.php" id="back-button">Back to Dashboard</a>
     <div id="chat-container">
         <div id="contacts">
-            <h3>Contacts</h3>
+            <h3>Doctors</h3>
             <?php foreach ($doctors as $doctor): ?>
                 <div class="contact-item" data-id="<?php echo htmlspecialchars($doctor['id']); ?>">
                     <img src="<?php echo $doctor['image'] ? '../uploads/' . htmlspecialchars($doctor['image']) : '../default_images/default.png'; ?>" alt="Profile Image">
@@ -220,7 +217,6 @@ $doctors = $stmt->fetchAll();
                 </div>
             <?php endforeach; ?>
         </div>
-
         <div id="chat-box">
             <div id="doctor-info">
                 <!-- Doctor's name and image will be dynamically inserted here -->
@@ -245,16 +241,9 @@ $doctors = $stmt->fetchAll();
                 $('#messages').empty();
                 messages.forEach(message => {
                     const messageClass = message.sender_id === patientId ? 'sent' : 'received';
-                    $('#messages').append(`
-                        <div class="message ${messageClass}">
-                            ${messageClass === 'received' ? `<strong>${message.sender_name}:</strong>` : ''}
-                            <span>${message.message}</span>
-                        </div>
-                    `);
+                    $('#messages').append(`<div class="message ${messageClass}"><strong>${messageClass === 'received' ? message.sender_name + ':' : ''}</strong>${message.message}</div>`);
                 });
                 $('#messages').scrollTop($('#messages')[0].scrollHeight);
-            }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.error('Request failed: ' + textStatus + ', ' + errorThrown);
             });
         }
 
@@ -264,16 +253,8 @@ $doctors = $stmt->fetchAll();
                 $('#contacts').empty();
                 contacts.forEach(contact => {
                     const notificationDot = contact.unread_messages > 0 ? '<div class="notification-dot"></div>' : '';
-                    $('#contacts').append(`
-                        <div class="contact-item" data-id="${contact.id}">
-                            <img src="${contact.image ? '../uploads/' + contact.image : '../default_images/default.png'}" alt="Profile Image">
-                            ${contact.name}
-                            ${notificationDot}
-                        </div>
-                    `);
+                    $('#contacts').append(`<div class="contact-item" data-id="${contact.id}"><img src="${contact.image ? '../uploads/' + contact.image : '../default_images/default.png'}" alt="Profile Image">${contact.name}${notificationDot}</div>`);
                 });
-            }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.error('Request failed: ' + textStatus + ', ' + errorThrown);
             });
         }
 
@@ -287,11 +268,7 @@ $doctors = $stmt->fetchAll();
                     $('#message-input').val('');  // Clear input after sending
                     fetchMessages();  // Fetch the latest messages
                     fetchContacts();  // Update contact list with unread counts
-                } else {
-                    alert(result.message);  // Show error message if sending failed
                 }
-            }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.error('Request failed: ' + textStatus + ', ' + errorThrown);
             });
         });
 
@@ -305,19 +282,11 @@ $doctors = $stmt->fetchAll();
                     chatId = result.chat_id;
 
                     // Update doctor info in #doctor-info
-                    $('#doctor-info').html(`
-                        <img src="${result.doctor_image}" alt="Doctor Image" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;">
-                        <span><strong>${result.doctor_name}</strong></span>
-                    `);
+                    $('#doctor-info').html(`<img src="${result.doctor_image}" alt="Doctor Image" style="width: 50px; height: 50px; border-radius: 50%; margin-right: 10px;"><span><strong>${result.doctor_name}</strong></span>`);
 
-                    // Fetch messages for this chat
-                    fetchMessages();
+                    fetchMessages();  // Fetch messages for this chat
                     fetchContacts();  // Update contact list to reflect chat selection
-                } else {
-                    alert(result.message);
                 }
-            }).fail(function(jqXHR, textStatus, errorThrown) {
-                console.error('Request failed: ' + textStatus + ', ' + errorThrown);
             });
         });
 
@@ -327,10 +296,8 @@ $doctors = $stmt->fetchAll();
             fetchContacts();
         }, 5000);
 
-        // Initial fetch of messages and contacts
         fetchMessages();
         fetchContacts();
     </script>
-
 </body>
 </html>

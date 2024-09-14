@@ -2,21 +2,21 @@
 session_start();
 include '../db.php';
 
-// Check if the user is logged in
-if (!isset($_SESSION['user_id']) || !isset($_GET['chat_id'])) {
-    echo json_encode(['status' => 'error', 'message' => 'Invalid request']);
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'doctor') {
+    echo json_encode([]);
     exit();
 }
 
-$chat_id = intval($_GET['chat_id']);
-$user_id = $_SESSION['user_id'];
+$doctor_id = $_SESSION['user_id'];
+$chat_id = isset($_GET['chat_id']) ? intval($_GET['chat_id']) : 0;
 
-// Fetch messages for the given chat ID
-$stmt = $pdo->prepare("SELECT m.*, u.name AS sender_name, u.image AS sender_image 
-                       FROM messages m 
-                       JOIN users u ON m.sender_id = u.id 
-                       WHERE m.chat_id = ? 
-                       ORDER BY m.timestamp ASC");
+$stmt = $pdo->prepare("
+    SELECT m.*, u.name AS sender_name
+    FROM messages m
+    JOIN users u ON m.sender_id = u.id
+    WHERE m.chat_id = ?
+    ORDER BY m.timestamp ASC
+");
 $stmt->execute([$chat_id]);
 $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

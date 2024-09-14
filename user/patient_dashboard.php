@@ -129,7 +129,7 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
         }
         .table-wrapper {
             margin-top: 20px;
-            max-height: 400px;
+            max-height: 250px;
             overflow-y: auto;
         }
         table {
@@ -187,6 +187,10 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
         .action-button:hover {
             background-color: #c82333;
         }
+        .action-column {
+            width: 120px; /* Adjust this width according to your needs */
+        }
+
     </style>
 </head>
 <body>
@@ -253,28 +257,30 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
 
 <script>
     $(document).ready(function() {
-        $('.cancel-btn').click(function() {
-            var button = $(this);
-            var appointmentId = button.data('id');
+            $('.cancel-btn').click(function() {
+                var button = $(this);
+                var appointmentId = button.data('id');
 
-            $.ajax({
-                type: 'POST',
-                url: 'patient_dashboard.php',
-                data: { ajax_action: true, action: 'cancel', appointment_id: appointmentId },
-                success: function(response) {
-                    if (response === "Success") {
-                        button.closest('tr').find('.status')
-                            .removeClass('Pending')
-                            .addClass('Cancelled')
-                            .text('Cancelled');
-                        button.addClass('hidden'); // Hide the button while preserving space
-                    } else {
-                        alert('Cancellation failed. Please try again.');
+                $.ajax({
+                    type: 'POST',
+                    url: 'patient_dashboard.php',
+                    data: { ajax_action: true, action: 'cancel', appointment_id: appointmentId },
+                    success: function(response) {
+                        if (response === "Success") {
+                            var row = button.closest('tr');
+                            row.find('.status')
+                                .removeClass('Pending')
+                                .addClass('Cancelled')
+                                .text('Cancelled');
+                            button.remove(); // Completely remove the button from the DOM
+                        } else {
+                            alert('Cancellation failed. Please try again.');
+                        }
                     }
-                }
+                });
             });
         });
-    });
+
 </script>
 
 </body>

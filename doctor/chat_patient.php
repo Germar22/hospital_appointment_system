@@ -22,9 +22,19 @@ if ($chat_id) {
     }
 }
 
-// Fetch the list of patients with their profile images
-$stmt = $pdo->prepare("SELECT u.id, u.name, u.image FROM users u JOIN patients p ON u.id = p.user_id");
-$stmt->execute();
+// Fetch the list of patients with their profile images and unread message counts
+$stmt = $pdo->prepare("
+    SELECT u.id, u.name, u.image,
+           IFNULL(SUM(CASE WHEN m.is_read = 0 AND m.sender_id != ? THEN 1 ELSE 0 END), 0) AS unread_messages
+    FROM users u
+    JOIN patients p ON u.id = p.user_id
+    LEFT JOIN messages m ON (m.sender_id = u.id AND m.is_read = 0 AND m.chat_id IN (
+        SELECT id FROM chats WHERE sender_id = ? OR receiver_id = ?
+    ))
+    WHERE u.id != ?
+    GROUP BY u.id, u.name, u.image
+");
+$stmt->execute([$doctor_id, $doctor_id, $doctor_id, $doctor_id]);
 $patients = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -69,7 +79,12 @@ $patients = $stmt->fetchAll();
             align-items: center;
             position: relative;
         }
-
+        .contact-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
         .unread-indicator {
             width: 10px;
             height: 10px;
@@ -79,15 +94,8 @@ $patients = $stmt->fetchAll();
             top: 10px;
             right: 10px;
         }
-
         .contact-item:hover {
             background-color: #f0f2f5;
-        }
-        .contact-item img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 10px;
         }
         #chat-box {
             flex: 1;
@@ -206,10 +214,12 @@ $patients = $stmt->fetchAll();
                 <div class="contact-item" data-id="<?php echo htmlspecialchars($patient['id']); ?>">
                     <img src="<?php echo $patient['image'] ? '../uploads/' . htmlspecialchars($patient['image']) : '../default_images/default.png'; ?>" alt="Profile Image">
                     <?php echo htmlspecialchars($patient['name']); ?>
+                    <?php if ($patient['unread_messages'] > 0): ?>
+                        <div class="unread-indicator"></div>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         </div>
-
         <div id="chat-box">
             <div id="patient-info">
                 <!-- Patient's name and image will be dynamically inserted here -->
@@ -222,28 +232,28 @@ $patients = $stmt->fetchAll();
         </div>
     </div>
 
-    <script>
-        let chatId = <?php echo json_encode($chat_id); ?>;
-        let doctorId = <?php echo json_encode($doctor_id); ?>;
+            <script>
+            let chatId = <?php echo json_encode($chat_id); ?>;
+            let doctorId = <?php echo json_encode($doctor_id); ?>;
 
-        function fetchMessages() {
-            if (!chatId) return;
+            function fetchMessages() {
+                if (!chatId) return;
 
-            $.get('fetch_messages.php', { chat_id: chatId }, function(data) {
-                const messages = JSON.parse(data);
-                $('#messages').empty();
-                messages.forEach(message => {
-                    const messageClass = message.sender_id === doctorId ? 'sent' : 'received';
-                    $('#messages').append(`
-                        <div class="message ${messageClass}">
-                            ${messageClass === 'received' ? `<strong>${message.sender_name}:</strong>` : ''}
-                            <span>${message.message}</span>
-                        </div>
-                    `);
+                $.get('fetch_messages.php', { chat_id: chatId }, function(data) {
+                    const messages = JSON.parse(data);
+                    $('#messages').empty();
+                    messages.forEach(message => {
+                        const messageClass = message.sender_id === doctorId ? 'sent' : 'received';
+                        $('#messages').append(`
+                            <div class="message ${messageClass}">
+                                ${messageClass === 'received' ? `<strong>${message.sender_name}:</strong>` : ''}
+                                <span>${message.message}</span>
+                            </div>
+                        `);
+                    });
+                    $('#messages').scrollTop($('#messages')[0].scrollHeight);
                 });
-                $('#messages').scrollTop($('#messages')[0].scrollHeight);
-            });
-        }
+            }
 
             $('#send-button').click(function() {
                 const message = $('#message-input').val();
@@ -262,8 +272,8 @@ $patients = $stmt->fetchAll();
 
             $('#contacts').on('click', '.contact-item', function() {
                 const patientId = $(this).data('id');
+                const $contactItem = $(this);
 
-                // Create or select a chat with this patient
                 $.post('create_or_select_chat.php', { patient_id: patientId }, function(response) {
                     const result = JSON.parse(response);
                     if (result.status === 'success') {
@@ -277,18 +287,25 @@ $patients = $stmt->fetchAll();
 
                         // Fetch messages for this chat
                         fetchMessages();
+
+                        // Remove unread indicator
+                        $contactItem.find('.unread-indicator').remove();
+
+                        // Mark messages as read
+                        $.post('mark_messages_as_read.php', { chat_id: chatId }, function(response) {
+                            // Handle response if needed
+                        });
                     } else {
                         alert(result.message);
                     }
                 });
             });
 
+            // Fetch messages every 5 seconds to update chat window
+            setInterval(fetchMessages, 5000);
 
-        // Fetch messages every 5 seconds to update chat window
-        setInterval(fetchMessages, 5000);
-        
-        // Initial fetch of messages
-        fetchMessages();
-    </script>
+            // Initial fetch of messages
+            fetchMessages();
+        </script>
 </body>
 </html>

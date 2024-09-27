@@ -2,7 +2,8 @@
 session_start();
 include '../db.php'; // Adjust path if needed
 
-if (!isset($_SESSION['user_id'])) {
+// Check if user is logged in and is a patient
+if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'doctor') {
     header("Location: ../index.php");
     exit();
 }
@@ -13,7 +14,8 @@ $message = ""; // Initialize message variable
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
-
+    $address = $_POST['address']; // Capture address input
+    
     // Handle image upload
     $image = null;
     if (isset($_FILES['image']) && $_FILES['image']['error'] == 0) {
@@ -26,10 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $image = $image_name;
         }
     }
-
-    // Update user data
-    $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, image = COALESCE(?, image) WHERE id = ?");
-    if ($stmt->execute([$name, $email, $image, $user_id])) {
+    
+    // Update user data including address
+    $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, address = ?, image = COALESCE(?, image) WHERE id = ?");
+    if ($stmt->execute([$name, $email, $address, $image, $user_id])) {
         $message = 'Changes have been saved.';
     } else {
         $message = 'Failed to update profile. Please try again.';
@@ -37,12 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch current user details
-$stmt = $pdo->prepare("SELECT name, email, image FROM users WHERE id = ?");
+$stmt = $pdo->prepare("SELECT name, email, address, image FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
-
-// Determine the profile image path
-$profile_image = !empty($user['image']) ? $user['image'] : 'default.jpg';
 ?>
 
 <!DOCTYPE html>
@@ -167,9 +166,15 @@ $profile_image = !empty($user['image']) ? $user['image'] : 'default.jpg';
                 <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
             </div>
             <div class="form-group">
+                <label for="address">Address:</label>
+                <input type="text" id="address" name="address" value="<?php echo htmlspecialchars($user['address']); ?>" required>
+            </div>
+            <div class="form-group">
                 <label for="image">Profile Image:</label>
                 <input type="file" id="image" name="image" accept="image/*">
-                <img src="../uploads/<?php echo htmlspecialchars($profile_image); ?>" alt="Profile Image" class="profile-image">
+                <?php if ($user['image']): ?>
+                    <img src="../uploads/<?php echo htmlspecialchars($user['image']); ?>" alt="Profile Image" class="profile-image">
+                <?php endif; ?>
             </div>
             <div class="button-group">
                 <button type="submit" class="save-button">Save Changes</button>

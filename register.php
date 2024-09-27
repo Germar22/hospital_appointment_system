@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
     $password = isset($_POST['password']) ? trim($_POST['password']) : '';
     $user_type = isset($_POST['user_type']) ? trim($_POST['user_type']) : '';
     $specialization = isset($_POST['specialization']) ? trim($_POST['specialization']) : '';
+    $address = isset($_POST['address']) ? trim($_POST['address']) : ''; // Capture the address field
 
     // Combine start and end times into a single string for availability schedule
     $start_time = isset($_POST['start_time']) ? trim($_POST['start_time']) : '';
@@ -45,10 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
         // Hash the password
         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
-        // Insert user data
-        $stmt = $pdo->prepare("INSERT INTO users (name, email, password, user_type, image) VALUES (?, ?, ?, ?, ?)");
+        // Insert user data including the address
+        $stmt = $pdo->prepare("INSERT INTO users (name, email, password, user_type, image, address) VALUES (?, ?, ?, ?, ?, ?)");
         try {
-            $stmt->execute([$name, $email, $hashed_password, $user_type, $image]);
+            $stmt->execute([$name, $email, $hashed_password, $user_type, $image, $address]);
 
             $user_id = $pdo->lastInsertId();
 
@@ -171,41 +172,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
 
     <!-- Registration Form -->
     <form method="post" action="" enctype="multipart/form-data">
-        <h3>Register</h3>
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required>
+            <h3>Register</h3>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
 
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
 
-        <label for="user_type">User Type:</label>
-        <select id="user_type" name="user_type" required>
-            <option value="" disabled selected>Select User Type</option>
-            <option value="admin">Admin</option>
-            <option value="doctor">Doctor</option>
-            <option value="patient">Patient</option>
-        </select>
+            <label for="user_type">User Type:</label>
+            <select id="user_type" name="user_type" required>
+                <option value="" disabled selected>Select User Type</option>
+                <option value="admin">Admin</option>
+                <option value="doctor">Doctor</option>
+                <option value="patient">Patient</option>
+            </select>
 
-        <div id="specialization_container" class="specialization-container">
-            <label for="specialization">Specialization:</label>
-            <input type="text" id="specialization" name="specialization">
+            <div id="specialization_container" class="specialization-container">
+                <label for="specialization">Specialization:</label>
+                <input type="text" id="specialization" name="specialization">
 
-            <label for="availability_schedule">Availability Schedule:</label>
+                <label for="availability_schedule">Availability Schedule:</label>
 
-            <label for="start_time">Start Time:</label>
-            <input type="time" id="start_time" name="start_time">
-            <label for="end_time">End Time:</label>
-            <input type="time" id="end_time" name="end_time">
-        </div>
+                <label for="start_time">Start Time:</label>
+                <input type="time" id="start_time" name="start_time">
+                <label for="end_time">End Time:</label>
+                <input type="time" id="end_time" name="end_time">
+            </div>
 
-        <label for="image">Profile Image:</label>
-        <input type="file" id="image" name="image">
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" required> <!-- New Address Field -->
 
-        <input type="submit" name="register" value="Register">
-    </form>
+            <label for="image">Profile Image:</label>
+            <input type="file" id="image" name="image">
+
+            <input type="submit" name="register" value="Register">
+        </form>
 
     <div class="login-link">
         <p>Already have an account? <a href="index.php">Login here</a></p>

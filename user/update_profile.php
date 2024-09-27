@@ -14,6 +14,7 @@ $message = ""; // Initialize message variable
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $_POST['name'];
     $email = $_POST['email'];
+    $address = $_POST['address']; // Capture address input
     
     // Handle image upload
     $image = null;
@@ -28,9 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // Update user data
-    $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, image = COALESCE(?, image) WHERE id = ?");
-    if ($stmt->execute([$name, $email, $image, $user_id])) {
+    // Update user data including address
+    $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, address = ?, image = COALESCE(?, image) WHERE id = ?");
+    if ($stmt->execute([$name, $email, $address, $image, $user_id])) {
         $message = 'Changes have been saved.';
     } else {
         $message = 'Failed to update profile. Please try again.';
@@ -38,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch current user details
-$stmt = $pdo->prepare("SELECT name, email, image FROM users WHERE id = ?");
+$stmt = $pdo->prepare("SELECT name, email, address, image FROM users WHERE id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
 ?>
@@ -163,6 +164,10 @@ $user = $stmt->fetch();
             <div class="form-group">
                 <label for="email">Email:</label>
                 <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+            </div>
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <input type="text" id="address" name="address" value="<?php echo htmlspecialchars($user['address']); ?>" required>
             </div>
             <div class="form-group">
                 <label for="image">Profile Image:</label>

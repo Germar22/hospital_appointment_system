@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 14, 2024 at 06:47 AM
--- Server version: 10.4.28-MariaDB
--- PHP Version: 8.3.11
+-- Generation Time: Sep 28, 2024 at 07:16 AM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -101,7 +101,6 @@ INSERT INTO `appointments` (`id`, `patient_id`, `doctor_id`, `appointment_date`,
 (148, 15, 11, '2024-09-12 00:33:00', 'Completed', '2024-09-10 10:33:51', '2024-09-10 10:47:30', 'pat', 'doc'),
 (149, 15, 14, '2024-09-20 10:34:00', 'Approved', '2024-09-10 10:34:20', '2024-09-10 10:35:22', 'pat', 'doc12'),
 (150, 15, 11, '2024-09-14 13:53:00', 'Completed', '2024-09-10 10:53:58', '2024-09-10 10:54:41', 'pat', 'doc'),
-(151, 31, 13, '2024-10-09 11:04:00', 'Cancelled', '2024-09-14 04:04:20', '2024-09-14 04:04:32', 'paw', 'doc3'),
 (152, 31, 13, '2024-09-28 12:05:00', 'Completed', '2024-09-14 04:05:08', '2024-09-14 04:07:44', 'paw', 'doc3'),
 (153, 15, 11, '2024-09-24 12:25:00', 'Completed', '2024-09-14 04:25:18', '2024-09-14 04:31:12', 'pat', 'doc'),
 (154, 15, 11, '2024-09-24 12:30:00', 'Completed', '2024-09-14 04:25:28', '2024-09-14 04:31:10', 'pat', 'doc'),
@@ -117,8 +116,6 @@ INSERT INTO `appointments` (`id`, `patient_id`, `doctor_id`, `appointment_date`,
 (164, 15, 11, '2024-09-18 13:00:00', 'Completed', '2024-09-14 05:00:57', '2024-09-14 05:01:27', 'pat', 'doc'),
 (165, 15, 11, '2024-10-11 13:00:00', 'Completed', '2024-09-14 05:01:00', '2024-09-14 05:01:22', 'pat', 'doc'),
 (166, 15, 11, '2024-10-02 13:01:00', 'Completed', '2024-09-14 05:01:48', '2024-09-14 05:02:10', 'pat', 'doc'),
-(167, 15, 11, '2024-09-21 13:03:00', 'Cancelled', '2024-09-14 05:03:52', '2024-09-14 05:03:55', 'pat', 'doc'),
-(168, 15, 11, '2024-10-05 13:04:00', 'Cancelled', '2024-09-14 05:04:46', '2024-09-14 05:04:47', 'pat', 'doc'),
 (169, 15, 11, '2024-09-17 13:09:00', 'Completed', '2024-09-14 05:09:58', '2024-09-14 05:17:11', 'pat', 'doc'),
 (170, 15, 11, '2024-09-15 13:17:00', 'Completed', '2024-09-14 05:17:34', '2024-09-14 05:18:14', 'pat', 'doc'),
 (171, 15, 11, '2024-10-01 13:24:00', 'Completed', '2024-09-14 05:25:01', '2024-09-14 05:25:12', 'pat', 'doc');
@@ -310,7 +307,10 @@ INSERT INTO `messages` (`id`, `chat_id`, `sender_id`, `message`, `sent_at`, `tim
 (71, 1, 26, 'qweqweqwe', '2024-09-14 06:30:34', '2024-09-14 06:30:34', 1),
 (72, 1, 24, 'patpatpaptaptpapta', '2024-09-14 06:37:11', '2024-09-14 06:37:11', 1),
 (73, 1, 26, 'adsadasdasd', '2024-09-14 06:37:29', '2024-09-14 06:37:29', 1),
-(74, 1, 26, 'try ulet', '2024-09-14 06:46:55', '2024-09-14 06:46:55', 1);
+(74, 1, 26, 'try ulet', '2024-09-14 06:46:55', '2024-09-14 06:46:55', 1),
+(75, 1, 26, 'qqweqqweqwe', '2024-09-16 14:08:09', '2024-09-16 14:08:09', 1),
+(76, 1, 24, 'wao', '2024-09-16 14:08:28', '2024-09-16 14:08:28', 1),
+(77, 1, 26, 'hello', '2024-09-27 09:12:59', '2024-09-27 09:12:59', 1);
 
 -- --------------------------------------------------------
 
@@ -339,7 +339,8 @@ INSERT INTO `patients` (`id`, `user_id`, `name`, `email`) VALUES
 (23, 39, 'pat11', 'pat11@gmail.com'),
 (29, 49, 'waw', 'waw@gmail.com'),
 (30, 53, 'wae', 'wae@gmail.com'),
-(31, 54, 'paw', 'paw@gmail.com');
+(31, 54, 'paw', 'paw@gmail.com'),
+(32, 55, 'gear', 'gear@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -351,40 +352,41 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
-  `email_verified` tinyint(1) DEFAULT 0,
   `password` varchar(255) NOT NULL,
   `user_type` enum('admin','doctor','patient') NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `image` varchar(255) DEFAULT 'default_images/default.jpg'
+  `image` varchar(255) DEFAULT 'default_images/default.jpg',
+  `address` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `email_verified`, `password`, `user_type`, `created_at`, `updated_at`, `image`) VALUES
-(23, 'admin', 'admin@gmail.com', 0, '$2y$10$76BKDZcmD2xEMBXcLGaC/up1oi3OQ4mWF/fSxYsX9ErOo9ZsXrA7q', 'admin', '2024-08-28 15:44:24', '2024-09-09 15:24:01', '1725895441_default.png'),
-(24, 'pat', 'pat@gmail.com', 0, '$2y$10$.AWNTXtzlu9aAmaL87S9qeRK8vgg.tbjeZxq1jZxRtbtL93y6lnue', 'patient', '2024-08-28 15:44:46', '2024-09-09 15:24:21', '1725895461_2020-1274-PHOTO.jpg'),
-(25, 'pat2', 'pat2@gmail.com', 0, '$2y$10$lwp9JQABBaTG3zXtD3QVG.AvDlOptzP0vaO2KrSCSYyzZHgJwK52e', 'patient', '2024-08-28 15:45:00', '2024-09-14 06:29:08', '1726295348_default.png'),
-(26, 'doc', 'doc@gmail.com', 0, '$2y$10$cCt5eo8h5Xx0xYl6UDmwReIAZ0rnIJSoGHdI5lDk773ljfB4LTepO', 'doctor', '2024-08-28 15:45:31', '2024-09-11 07:10:42', '1726038642_3rd.png'),
-(27, 'doc2', 'doc2@gmail.com', 0, '$2y$10$2uDwLCw8bM0PCpzHvh8AAusASRz7xIsMyyl1ceCqQq5EDMTvNJ5C.', 'doctor', '2024-08-28 15:46:08', '2024-09-14 04:14:00', '1726287240_default.png'),
-(28, 'patpat', 'pat3@gmail.com', 0, '$2y$10$hqjYYmbhVFEWeDgUiUGLcetJ3A4SBmGxVoZ7IeBoPXSQos/rmbipy', 'patient', '2024-08-29 00:28:04', '2024-08-30 10:10:36', 'default.jpg'),
-(29, 'doc3', 'doc3@gmail.com', 0, '$2y$10$F8sF/jrkC2fky8u7rUPXGu4HjD/L9U7etOs/IC9/vtAONKz.joAEa', 'doctor', '2024-08-29 10:09:36', '2024-09-14 04:08:29', '1726286909_default.png'),
-(30, 'pat4', 'pat4@gmail.com', 0, '$2y$10$vrJafljCcilF2WbFviJsKuxz0H1jPugJGoG9BeMUEvG/Y6uhC7zO2', 'patient', '2024-08-30 10:24:15', '2024-09-14 06:43:17', '1726296197_default.png'),
-(31, 'admin2', 'admin2@gmail.com', 0, '$2y$10$H3RAKjF/mEBewRa3MEf2zuQE7hx7j/WymDcZKkVscuAQ78xBAR7yW', 'admin', '2024-08-30 10:32:43', '2024-08-30 10:32:43', NULL),
-(32, 'admin3', 'admin3@gmail.com', 0, '$2y$10$BFmI.cWQPnUDp0AHeM2VWuKRPhNLiu.0C498RLwnn2.El6w5I8CVG', 'admin', '2024-08-30 10:35:06', '2024-08-30 10:35:06', NULL),
-(34, 'admin12', 'admin12@gmail.com', 0, '$2y$10$hGOj.1S0D3bMvk8TNxS8R..uxSscMMwb6ZmgvMbxi0k08GkyFOXIq', 'admin', '2024-08-30 11:00:33', '2024-08-30 11:00:33', NULL),
-(35, 'pat12', 'pat12@gmail.com', 0, '$2y$10$c/uN65.Lsc6Ghm4qOTOxauZMLLvZQGiKPiAVmDhXezFG3MyFQhOVu', 'patient', '2024-08-30 11:24:35', '2024-08-30 11:24:35', NULL),
-(36, 'admin13', 'admin13@gmail.com', 0, '$2y$10$CycaD1dJG6WCjdRxwUOX7uYI0AO/gA/3DhKbmmxik25vxon38Shu6', 'admin', '2024-08-30 11:25:25', '2024-08-30 11:25:25', NULL),
-(37, 'pat13', 'pat13@gmail.com', 0, '$2y$10$X7O.SzX69KQvleyuydhVBObbS8t.onmIoJcHQCZSKWIf6zGowAlXG', 'patient', '2024-08-30 11:43:33', '2024-08-30 13:22:01', NULL),
-(39, 'pat11', 'pat11@gmail.com', 0, '$2y$10$.pUZHifl7K7dpZwnz4txa.riy.F80dKSEfEGT7PbHusJKu0WIZ4ge', 'patient', '2024-08-30 14:04:13', '2024-08-30 14:04:13', NULL),
-(49, 'waw', 'waw@gmail.com', 0, '$2y$10$ozGQ99OctODa5UO2chq.yeIPLINjPe5gX.QCvXwqixPvrr4DU6vHK', 'patient', '2024-09-05 02:02:59', '2024-09-05 02:02:59', NULL),
-(50, 'doc12', 'doc12@gmail.com', 0, '$2y$10$7JmnJycnL7KzQZKwlnICieejazjSrYuCjBvgjnahWV4AQPLnqOQqe', 'doctor', '2024-09-10 09:50:21', '2024-09-10 09:50:21', NULL),
-(51, 'doc13', 'doc13@gmail.com', 0, '$2y$10$dFhGxRzeUF4e8/qyqTDk/efeYesuOkp5QOINssnr9j0Fe5ua/eAXC', 'doctor', '2024-09-10 09:51:59', '2024-09-10 09:51:59', NULL),
-(52, 'wewe', 'wewe@gmail.com', 0, '$2y$10$8DVk0REIZjquf20GrzQpXugsHGBbJ7mrZRQANqMrJsbP75AlnojT.', 'doctor', '2024-09-11 07:22:17', '2024-09-11 07:22:17', NULL),
-(53, 'wae', 'wae@gmail.com', 0, '$2y$10$PzDEtgGeBuFkWKUplxQ3ZeGvUDnbM1.SWAOBBfYDbseg4lcAjhWr.', 'patient', '2024-09-11 10:04:31', '2024-09-11 10:04:31', '1726049071_images.jpg'),
-(54, 'paw', 'paw@gmail.com', 0, '$2y$10$iIretboVoNw6WwnrZNQxjeXEz.11Xg4QZ8WF4bSthrsH4D/Stez.a', 'patient', '2024-09-14 04:03:01', '2024-09-14 04:03:20', '1726286600_357646359_975128816970660_8020607003782267481_n.jpg');
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `user_type`, `created_at`, `updated_at`, `image`, `address`) VALUES
+(23, 'admin', 'admin@gmail.com', '$2y$10$76BKDZcmD2xEMBXcLGaC/up1oi3OQ4mWF/fSxYsX9ErOo9ZsXrA7q', 'admin', '2024-08-28 15:44:24', '2024-09-28 05:02:46', '1725895441_default.png', 'Fatima, General Santos, Soccsksargen, 9500, Philippines'),
+(24, 'pat', 'pat@gmail.com', '$2y$10$.AWNTXtzlu9aAmaL87S9qeRK8vgg.tbjeZxq1jZxRtbtL93y6lnue', 'patient', '2024-08-28 15:44:46', '2024-09-28 05:00:06', '1725895461_2020-1274-PHOTO.jpg', 'Placeda, Fatima, General Santos, Soccsksargen, 9500, Philippines'),
+(25, 'pat2', 'pat2@gmail.com', '$2y$10$lwp9JQABBaTG3zXtD3QVG.AvDlOptzP0vaO2KrSCSYyzZHgJwK52e', 'patient', '2024-08-28 15:45:00', '2024-09-14 06:29:08', '1726295348_default.png', NULL),
+(26, 'doc', 'doc@gmail.com', '$2y$10$cCt5eo8h5Xx0xYl6UDmwReIAZ0rnIJSoGHdI5lDk773ljfB4LTepO', 'doctor', '2024-08-28 15:45:31', '2024-09-27 08:43:16', '1726038642_3rd.png', 'prk. 24 fatima Uhaw General Santos City'),
+(27, 'doc2', 'doc2@gmail.com', '$2y$10$2uDwLCw8bM0PCpzHvh8AAusASRz7xIsMyyl1ceCqQq5EDMTvNJ5C.', 'doctor', '2024-08-28 15:46:08', '2024-09-14 04:14:00', '1726287240_default.png', NULL),
+(28, 'patpat', 'pat3@gmail.com', '$2y$10$hqjYYmbhVFEWeDgUiUGLcetJ3A4SBmGxVoZ7IeBoPXSQos/rmbipy', 'patient', '2024-08-29 00:28:04', '2024-08-30 10:10:36', 'default.jpg', NULL),
+(29, 'doc3', 'doc3@gmail.com', '$2y$10$F8sF/jrkC2fky8u7rUPXGu4HjD/L9U7etOs/IC9/vtAONKz.joAEa', 'doctor', '2024-08-29 10:09:36', '2024-09-14 04:08:29', '1726286909_default.png', NULL),
+(30, 'pat4', 'pat4@gmail.com', '$2y$10$vrJafljCcilF2WbFviJsKuxz0H1jPugJGoG9BeMUEvG/Y6uhC7zO2', 'patient', '2024-08-30 10:24:15', '2024-09-14 06:43:17', '1726296197_default.png', NULL),
+(31, 'admin2', 'admin2@gmail.com', '$2y$10$H3RAKjF/mEBewRa3MEf2zuQE7hx7j/WymDcZKkVscuAQ78xBAR7yW', 'admin', '2024-08-30 10:32:43', '2024-08-30 10:32:43', NULL, NULL),
+(32, 'admin3', 'admin3@gmail.com', '$2y$10$BFmI.cWQPnUDp0AHeM2VWuKRPhNLiu.0C498RLwnn2.El6w5I8CVG', 'admin', '2024-08-30 10:35:06', '2024-08-30 10:35:06', NULL, NULL),
+(34, 'admin12', 'admin12@gmail.com', '$2y$10$hGOj.1S0D3bMvk8TNxS8R..uxSscMMwb6ZmgvMbxi0k08GkyFOXIq', 'admin', '2024-08-30 11:00:33', '2024-08-30 11:00:33', NULL, NULL),
+(35, 'pat12', 'pat12@gmail.com', '$2y$10$c/uN65.Lsc6Ghm4qOTOxauZMLLvZQGiKPiAVmDhXezFG3MyFQhOVu', 'patient', '2024-08-30 11:24:35', '2024-08-30 11:24:35', NULL, NULL),
+(36, 'admin13', 'admin13@gmail.com', '$2y$10$CycaD1dJG6WCjdRxwUOX7uYI0AO/gA/3DhKbmmxik25vxon38Shu6', 'admin', '2024-08-30 11:25:25', '2024-08-30 11:25:25', NULL, NULL),
+(37, 'pat13', 'pat13@gmail.com', '$2y$10$X7O.SzX69KQvleyuydhVBObbS8t.onmIoJcHQCZSKWIf6zGowAlXG', 'patient', '2024-08-30 11:43:33', '2024-08-30 13:22:01', NULL, NULL),
+(39, 'pat11', 'pat11@gmail.com', '$2y$10$.pUZHifl7K7dpZwnz4txa.riy.F80dKSEfEGT7PbHusJKu0WIZ4ge', 'patient', '2024-08-30 14:04:13', '2024-08-30 14:04:13', NULL, NULL),
+(49, 'waw', 'waw@gmail.com', '$2y$10$ozGQ99OctODa5UO2chq.yeIPLINjPe5gX.QCvXwqixPvrr4DU6vHK', 'patient', '2024-09-05 02:02:59', '2024-09-05 02:02:59', NULL, NULL),
+(50, 'doc12', 'doc12@gmail.com', '$2y$10$7JmnJycnL7KzQZKwlnICieejazjSrYuCjBvgjnahWV4AQPLnqOQqe', 'doctor', '2024-09-10 09:50:21', '2024-09-10 09:50:21', NULL, NULL),
+(51, 'doc13', 'doc13@gmail.com', '$2y$10$dFhGxRzeUF4e8/qyqTDk/efeYesuOkp5QOINssnr9j0Fe5ua/eAXC', 'doctor', '2024-09-10 09:51:59', '2024-09-10 09:51:59', NULL, NULL),
+(52, 'wewe', 'wewe@gmail.com', '$2y$10$8DVk0REIZjquf20GrzQpXugsHGBbJ7mrZRQANqMrJsbP75AlnojT.', 'doctor', '2024-09-11 07:22:17', '2024-09-11 07:22:17', NULL, NULL),
+(53, 'wae', 'wae@gmail.com', '$2y$10$PzDEtgGeBuFkWKUplxQ3ZeGvUDnbM1.SWAOBBfYDbseg4lcAjhWr.', 'patient', '2024-09-11 10:04:31', '2024-09-11 10:04:31', '1726049071_images.jpg', NULL),
+(54, 'paw', 'paw@gmail.com', '$2y$10$iIretboVoNw6WwnrZNQxjeXEz.11Xg4QZ8WF4bSthrsH4D/Stez.a', 'patient', '2024-09-14 04:03:01', '2024-09-14 04:03:20', '1726286600_357646359_975128816970660_8020607003782267481_n.jpg', NULL),
+(55, 'gear', 'gear@gmail.com', '$2y$10$5o.3V8Bm6JdCjSNmCaVG2.ppFuaSrtr0iXWwiVLgH73J/JPYprJ5O', 'patient', '2024-09-27 08:09:24', '2024-09-27 08:09:24', NULL, 'prk. 24 fatima uhaw, general santos city');
 
 --
 -- Indexes for dumped tables
@@ -459,19 +461,19 @@ ALTER TABLE `doctors`
 -- AUTO_INCREMENT for table `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
 
 --
 -- AUTO_INCREMENT for table `patients`
 --
 ALTER TABLE `patients`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- Constraints for dumped tables

@@ -8,8 +8,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'admin') {
     exit();
 }
 
-// Fetch all users
-$stmt = $pdo->query("SELECT id, name, email, user_type FROM users");
+// Fetch all users, including address
+$stmt = $pdo->query("SELECT id, name, email, user_type, address FROM users"); // Include address in the query
 $users = $stmt->fetchAll();
 ?>
 
@@ -128,6 +128,7 @@ $users = $stmt->fetchAll();
                         <th>Name</th>
                         <th>Email</th>
                         <th>User Type</th>
+                        <th>Address</th> <!-- New Address Column -->
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -138,6 +139,7 @@ $users = $stmt->fetchAll();
                         <td><?php echo htmlspecialchars($user['name']); ?></td>
                         <td><?php echo htmlspecialchars($user['email']); ?></td>
                         <td><?php echo htmlspecialchars($user['user_type']); ?></td>
+                        <td><?php echo htmlspecialchars($user['address']); ?></td> <!-- Display Address -->
                         <td class="actions">
                             <a href="edit_user.php?id=<?php echo $user['id']; ?>" class="btn edit">Edit</a>
                             <a href="delete_user.php?id=<?php echo $user['id']; ?>" class="btn delete" onclick="return confirm('Are you sure you want to delete this user?');">Delete</a>

@@ -79,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         /* Add your CSS styles here */
         body {
@@ -111,11 +112,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
         textarea,
         select,
         input[type="file"] {
-            width: 100%;
+            width: calc(100% - 20px); /* Adjust width to accommodate padding */
             padding: 10px;
             margin-bottom: 15px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="time"]:focus,
+        select:focus {
+            border-color: #007bff; /* Change border color on focus */
         }
         input[type="submit"] {
             width: 100%;
@@ -126,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
             border-radius: 4px;
             font-size: 16px;
             cursor: pointer;
+            transition: background-color 0.3s;
         }
         input[type="submit"]:hover {
             background-color: #0056b3;
@@ -158,6 +168,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
             background-color: #f8d7da;
             color: #721c24;
         }
+        /* Leaflet map style */
+        #map {
+            height: 400px; /* Set the height of the map */
+            margin-bottom: 15px;
+        }
+
     </style>
 </head>
 <body>
@@ -172,57 +188,214 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
 
     <!-- Registration Form -->
     <form method="post" action="" enctype="multipart/form-data">
-            <h3>Register</h3>
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
 
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
 
-            <label for="user_type">User Type:</label>
-            <select id="user_type" name="user_type" required>
-                <option value="" disabled selected>Select User Type</option>
-                <option value="admin">Admin</option>
-                <option value="doctor">Doctor</option>
-                <option value="patient">Patient</option>
-            </select>
+        <label for="user_type">User Type:</label>
+        <select id="user_type" name="user_type" required>
+            <option value="" disabled selected>Select User Type</option>
+            <option value="admin">Admin</option>
+            <option value="doctor">Doctor</option>
+            <option value="patient">Patient</option>
+        </select>
 
-            <div id="specialization_container" class="specialization-container">
-                <label for="specialization">Specialization:</label>
-                <input type="text" id="specialization" name="specialization">
+        <div id="specialization_container" class="specialization-container">
+            <label for="specialization">Specialization:</label>
+            <input type="text" id="specialization" name="specialization">
 
-                <label for="availability_schedule">Availability Schedule:</label>
+            <label for="availability_schedule">Availability Schedule:</label>
+            <label for="start_time">Start Time:</label>
+            <input type="time" id="start_time" name="start_time">
+            <label for="end_time">End Time:</label>
+            <input type="time" id="end_time" name="end_time">
+        </div>
 
-                <label for="start_time">Start Time:</label>
-                <input type="time" id="start_time" name="start_time">
-                <label for="end_time">End Time:</label>
-                <input type="time" id="end_time" name="end_time">
-            </div>
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required> <!-- New Address Field -->
 
-            <label for="address">Address:</label>
-            <input type="text" id="address" name="address" required> <!-- New Address Field -->
+        <div id="map"></div> <!-- Map container -->
 
-            <label for="image">Profile Image:</label>
-            <input type="file" id="image" name="image">
+        <button type="button" id="get-location">Use My Location</button> <!-- Button to get location -->
 
-            <input type="submit" name="register" value="Register">
-        </form>
+        <label for="image">Profile Image:</label>
+        <input type="file" id="image" name="image">
+
+        <input type="submit" name="register" value="Register">
+    </form>
 
     <div class="login-link">
         <p>Already have an account? <a href="index.php">Login here</a></p>
     </div>
 </div>
 
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
+    // Initialize the map
+        var map = L.map('map').setView([6.11452, 125.17242], 13); // Default view
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        var marker;
+
+        // Function to update the map based on address input
+        function updateMap() {
+            var address = document.getElementById('address').value;
+            if (address) {
+                // Fetch geocode data from Nominatim
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            var lat = data[0].lat;
+                            var lon = data[0].lon;
+
+                            // Update the map view and marker
+                            map.setView([lat, lon], 21);
+                            if (marker) {
+                                map.removeLayer(marker);
+                            }
+                            marker = L.marker([lat, lon]).addTo(map);
+                        } else {
+                            alert('Address not found. Please enter a valid address.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching location:', error);
+                        alert('An error occurred while fetching the location. Please try again.');
+                    });
+            }
+        }
+
+        // Add event listener to address input to update map on input change
+        document.getElementById('address').addEventListener('blur', updateMap);
+
+        // Event listener for the user type dropdown
+        document.getElementById('user_type').addEventListener('change', function() {
+            var specializationContainer = document.getElementById('specialization_container');
+            if (this.value === 'doctor') {
+                specializationContainer.style.display = 'block';
+            } else {
+                specializationContainer.style.display = 'none';
+            }
+        });
+
+// Get user's current location
+document.getElementById('get-location').addEventListener('click', function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+
+            // Use reverse geocoding to get address (optional)
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        document.getElementById('address').value = data.display_name;
+                        // Update the map view and marker
+                        map.setView([lat, lon], 17);
+                        if (marker) {
+                            map.removeLayer(marker);
+                        }
+                        marker = L.marker([lat, lon]).addTo(map);
+                    } else {
+                        alert('Could not retrieve address from location.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching location:', error);
+                    alert('An error occurred while fetching the address. Please try again.');
+                });
+        }, function(error) {
+            alert('Unable to retrieve your location: ' + error.message);
+        });
+    } else {
+        alert('Geolocation is not supported by this browser.');
+    }
+});
+
+// Add click event on the map to get the clicked location's coordinates
+map.on('click', function(e) {
+    var lat = e.latlng.lat;
+    var lon = e.latlng.lng;
+
+    // Use reverse geocoding to get the address of the clicked location
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.display_name) {
+                document.getElementById('address').value = data.display_name;
+                // Update the map view and marker
+                if (marker) {
+                    map.removeLayer(marker);
+                }
+                marker = L.marker([lat, lon]).addTo(map);
+            } else {
+                alert('Could not retrieve address from the clicked location.');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching location:', error);
+            alert('An error occurred while fetching the address. Please try again.');
+        });
+});
+
+    // Add event listener to address input to update map on input change
+    document.getElementById('address').addEventListener('blur', updateMap);
+
+    // Event listener for the user type dropdown
     document.getElementById('user_type').addEventListener('change', function() {
         var specializationContainer = document.getElementById('specialization_container');
         if (this.value === 'doctor') {
             specializationContainer.style.display = 'block';
         } else {
             specializationContainer.style.display = 'none';
+        }
+    });
+
+    // Get user's current location
+    document.getElementById('get-location').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var lat = position.coords.latitude;
+                var lon = position.coords.longitude;
+
+                // Use reverse geocoding to get address (optional)
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.display_name) {
+                            document.getElementById('address').value = data.display_name;
+                            // Update the map view and marker
+                            map.setView([lat, lon], 17);
+                            if (marker) {
+                                map.removeLayer(marker);
+                            }
+                            marker = L.marker([lat, lon]).addTo(map);
+                        } else {
+                            alert('Could not retrieve address from location.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching location:', error);
+                        alert('An error occurred while fetching the address. Please try again.');
+                    });
+            }, function(error) {
+                alert('Unable to retrieve your location: ' + error.message);
+            });
+        } else {
+            alert('Geolocation is not supported by this browser.');
         }
     });
 </script>

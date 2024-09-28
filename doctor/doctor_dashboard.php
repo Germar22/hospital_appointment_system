@@ -212,7 +212,6 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'complete') {
         </div>
 
         <div class="dashboard-links">
-            <a href="view_patients.php">View Patients</a>
             <a href="update_profile.php">Update Profile</a>
             <a href="chat_patient.php">Chat with Patients</a> <!-- Link to chat page -->
             <a href="../logout.php">Logout</a>

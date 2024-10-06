@@ -8,7 +8,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] !== 'doctor') {
     exit();
 }
 
-$doctor_id = $_SESSION['user_id'];
+$doctor_id = $_SESSION['user_id']; 
 
 // Fetch doctor details for profile image
 $stmt = $pdo->prepare("SELECT image FROM users WHERE id = ?");
@@ -23,27 +23,24 @@ $stmt = $pdo->prepare("
     SELECT a.id AS appointment_id, p.name AS patient_name, a.appointment_date, a.status
     FROM appointments a
     JOIN patients p ON a.patient_id = p.id
-    WHERE a.doctor_id = ? 
+    JOIN doctors d ON a.doctor_id = d.id
+    WHERE d.user_id = ? 
     ORDER BY a.id DESC
 ");
 $stmt->execute([$doctor_id]);
 $appointments = $stmt->fetchAll();
 
 // Handle appointment approval and completion through AJAX request
-if (isset($_POST['ajax_action']) && $_POST['action'] == 'approve') {
+if (isset($_POST['ajax_action'])) {
     $appointment_id = $_POST['appointment_id'];
-    $stmt = $pdo->prepare("UPDATE appointments SET status = 'Approved' WHERE id = ?");
-    if ($stmt->execute([$appointment_id])) {
-        echo "Success";
-    } else {
-        echo "Failed";
-    }
-    exit();
-}
+    $action = $_POST['action'];
 
-if (isset($_POST['ajax_action']) && $_POST['action'] == 'complete') {
-    $appointment_id = $_POST['appointment_id'];
-    $stmt = $pdo->prepare("UPDATE appointments SET status = 'Completed' WHERE id = ?");
+    if ($action == 'approve') {
+        $stmt = $pdo->prepare("UPDATE appointments SET status = 'Approved' WHERE id = ?");
+    } elseif ($action == 'complete') {
+        $stmt = $pdo->prepare("UPDATE appointments SET status = 'Completed' WHERE id = ?");
+    }
+
     if ($stmt->execute([$appointment_id])) {
         echo "Success";
     } else {
@@ -125,7 +122,7 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'complete') {
         }
         .table-wrapper {
             margin-top: 10px;
-            max-height: 300px;
+            max-height: 550px;
             overflow-y: auto;
         }
         table {

@@ -115,7 +115,7 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
         }
         .table-wrapper {
             margin-top: 10px;
-            max-height: 300px; /* Increased height for better visibility */
+            max-height: 550px; /* Increased height for better visibility */
             overflow-y: auto;
         }
         table {

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 28, 2024 at 07:16 AM
+-- Generation Time: Oct 06, 2024 at 01:25 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -118,7 +118,9 @@ INSERT INTO `appointments` (`id`, `patient_id`, `doctor_id`, `appointment_date`,
 (166, 15, 11, '2024-10-02 13:01:00', 'Completed', '2024-09-14 05:01:48', '2024-09-14 05:02:10', 'pat', 'doc'),
 (169, 15, 11, '2024-09-17 13:09:00', 'Completed', '2024-09-14 05:09:58', '2024-09-14 05:17:11', 'pat', 'doc'),
 (170, 15, 11, '2024-09-15 13:17:00', 'Completed', '2024-09-14 05:17:34', '2024-09-14 05:18:14', 'pat', 'doc'),
-(171, 15, 11, '2024-10-01 13:24:00', 'Completed', '2024-09-14 05:25:01', '2024-09-14 05:25:12', 'pat', 'doc');
+(171, 15, 11, '2024-10-01 13:24:00', 'Completed', '2024-09-14 05:25:01', '2024-09-14 05:25:12', 'pat', 'doc'),
+(172, 15, 11, '2024-10-07 14:20:00', 'Completed', '2024-10-06 11:18:56', '2024-10-06 11:19:28', 'pat', 'doc'),
+(173, 15, 11, '2024-10-09 12:25:00', 'Completed', '2024-10-06 11:20:22', '2024-10-06 11:20:47', 'pat', 'doc');
 
 -- --------------------------------------------------------
 
@@ -443,7 +445,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `appointments`
 --
 ALTER TABLE `appointments`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=172;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=174;
 
 --
 -- AUTO_INCREMENT for table `chats`

@@ -200,7 +200,7 @@ $user = $stmt->fetch();
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
     // Initialize the map
-    var map = L.map('map').setView([51.505, -0.09], 13); // Default view
+    var map = L.map('map').setView([6.11452, 125.17242], 13); // Default view
 
     // Add OpenStreetMap tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

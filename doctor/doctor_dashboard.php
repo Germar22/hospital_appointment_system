@@ -57,41 +57,58 @@ if (isset($_POST['ajax_action'])) {
     <title>Doctor Dashboard</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
             overflow: hidden;
         }
+
         .navbar {
             background-color: #007bff;
             padding: 10px;
             color: white;
             text-align: center;
-            margin-bottom: 10px;
         }
+
         .container {
             display: flex;
-            height: calc(100vh - 50px);
+            height: calc(100vh - 50px); /* Full height minus navbar */
             padding: 10px;
             gap: 10px;
-            overflow-y: auto;
         }
+
         .profile-section, .appointments-section {
-            flex: 1;
             background: #fff;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
             overflow-y: auto;
         }
+
+        .profile-section {
+            flex: 0.3;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .appointments-section {
+            flex: 0.7;
+            display: flex;
+            flex-direction: column;
+        }
+
         .profile-card {
             display: flex;
             align-items: center;
             margin-bottom: 20px;
         }
+
         .profile-card img {
             border-radius: 50%;
             width: 100px;
@@ -99,10 +116,7 @@ if (isset($_POST['ajax_action'])) {
             object-fit: cover;
             margin-right: 20px;
         }
-        .profile-card h1 {
-            margin: 0;
-            font-size: 1.5em;
-        }
+
         .dashboard-links a {
             display: block;
             padding: 10px;
@@ -114,38 +128,47 @@ if (isset($_POST['ajax_action'])) {
             text-align: center;
             transition: background-color 0.3s;
         }
+
         .dashboard-links a:hover {
             background-color: #0056b3;
         }
+
         .card {
             margin-top: 20px;
         }
+
         .table-wrapper {
+            flex-grow: 1;
             margin-top: 10px;
-            max-height: 550px;
             overflow-y: auto;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             border: 1px solid #ddd;
         }
+
         th, td {
             padding: 12px;
             text-align: center;
             border: 1px solid #ddd;
         }
+
         th {
             background-color: #007bff;
             color: white;
             font-weight: bold;
         }
+
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
         tr:hover {
             background-color: #f1f1f1;
         }
+
         .status {
             display: inline-block;
             padding: 5px;
@@ -153,18 +176,23 @@ if (isset($_POST['ajax_action'])) {
             color: white;
             min-width: 80px;
         }
+
         .status.Pending {
             background-color: #ffc107;
         }
+
         .status.Approved {
             background-color: #307f1b;
         }
+
         .status.Completed {
             background-color: #15a38e;
         }
+
         .status.Cancelled {
             background-color: #dc3545;
         }
+
         .action-button {
             background-color: #28a745;
             color: white;
@@ -175,18 +203,20 @@ if (isset($_POST['ajax_action'])) {
             font-size: 14px;
             transition: background-color 0.3s;
         }
+
         .action-button:hover {
             background-color: #218838;
         }
+
         .action-column {
             width: 120px;
         }
 
-        /* Responsive Styles */
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
             }
+
             .appointments-section {
                 margin-top: 20px;
             }

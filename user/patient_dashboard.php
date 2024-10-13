@@ -55,7 +55,7 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
             background-color: #f4f4f4;
             margin: 0;
             padding: 0;
-            height: 100vh; /* Ensure body fills the screen height */
+            height: 100vh;
             overflow: hidden; /* Prevent body scrolling */
         }
         .navbar {
@@ -67,18 +67,27 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
         }
         .container {
             display: flex;
-            height: calc(100vh - 50px); /* Adjust height based on navbar */
+            height: calc(100vh - 50px);
             padding: 10px;
-            gap: 10px; /* Space between sections */
-            overflow-y: auto; /* Enable scrolling for container */
+            gap: 10px;
+            overflow: hidden; /* Prevent scrolling on container */
         }
-        .profile-section, .appointments-section {
-            flex: 1; /* Equal width for both sections */
+        .profile-section {
+            flex: 0 0 30%; /* 30% width for profile section */
             background: #fff;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            overflow-y: auto; /* Enable scrolling if content overflows */
+            overflow: hidden; /* Prevent overflow on sections */
+        }
+        .appointments-section {
+            flex: 1; /* Allow appointments section to grow */
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-height: calc(100vh - 50px); /* Set maximum height for the section */
+            overflow-y: auto; /* Enable vertical scrolling */
         }
         .profile-card {
             display: flex;
@@ -94,7 +103,7 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
         }
         .profile-card h1 {
             margin: 0;
-            font-size: 1.5em; /* Improved font size */
+            font-size: 1.5em;
         }
         .dashboard-links a {
             display: block;
@@ -113,20 +122,17 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
         .card {
             margin-top: 20px;
         }
-        .table-wrapper {
-            margin-top: 10px;
-            max-height: 550px; /* Increased height for better visibility */
-            overflow-y: auto;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
             border: 1px solid #ddd;
+            table-layout: fixed; /* Prevent layout shifts */
         }
         th, td {
             padding: 12px;
             text-align: center;
             border: 1px solid #ddd;
+            word-wrap: break-word; /* Ensure long text breaks */
         }
         th {
             background-color: #007bff;
@@ -174,7 +180,6 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
         .action-column {
             width: 120px; /* Fixed width for action buttons */
         }
-
         /* Responsive Styles */
         @media (max-width: 768px) {
             .container {
@@ -212,41 +217,38 @@ if (isset($_POST['ajax_action']) && $_POST['action'] == 'cancel') {
     <div class="appointments-section">
         <div class="card">
             <h2>Your Appointments</h2>
-
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Appointment ID</th>
-                            <th>Doctor Name</th>
-                            <th>Appointment Date</th>
-                            <th>Status</th>
-                            <th class="action-column">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($appointments)): ?>
-                            <?php foreach ($appointments as $appointment): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
-                                    <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
-                                    <td><?php echo htmlspecialchars(date('F j, Y, g:i a', strtotime($appointment['appointment_date']))); ?></td>
-                                    <td><span class="status <?php echo htmlspecialchars($appointment['status']); ?>"><?php echo htmlspecialchars($appointment['status']); ?></span></td>
-                                    <td class="action-column">
-                                        <?php if ($appointment['status'] === 'Pending'): ?>
-                                            <button class="action-button cancel-btn" data-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">Cancel</button>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Appointment ID</th>
+                        <th>Doctor Name</th>
+                        <th>Appointment Date</th>
+                        <th>Status</th>
+                        <th class="action-column">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!empty($appointments)): ?>
+                        <?php foreach ($appointments as $appointment): ?>
                             <tr>
-                                <td colspan="5" style="text-align: center;">No appointments found.</td>
+                                <td><?php echo htmlspecialchars($appointment['appointment_id']); ?></td>
+                                <td><?php echo htmlspecialchars($appointment['doctor_name']); ?></td>
+                                <td><?php echo htmlspecialchars(date('F j, Y, g:i a', strtotime($appointment['appointment_date']))); ?></td>
+                                <td><span class="status <?php echo htmlspecialchars($appointment['status']); ?>"><?php echo htmlspecialchars($appointment['status']); ?></span></td>
+                                <td class="action-column">
+                                    <?php if ($appointment['status'] === 'Pending'): ?>
+                                        <button class="action-button cancel-btn" data-id="<?php echo htmlspecialchars($appointment['appointment_id']); ?>">Cancel</button>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="5">No appointments found.</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
